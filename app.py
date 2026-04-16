@@ -736,7 +736,7 @@ elif menu == "📦 Produk & Harga":
             "key": "LITE", "name": "V-LITE",
             "badge_cls": "badge-entry", "badge_txt": "Entry Level",
             "focus": "Fondasi keamanan digital untuk usaha satu kasir",
-            "price": "Rp 150rb", "period": "/ bulan", "setup": "Biaya pasang: Rp 350rb",
+            "price": "Rp 150rb", "period": "/ bulan", "setup": "Biaya pasang: Rp 250rb",
             "popular": False, "ultra": False,
             "features": [
                 "Deteksi VOID & Transaksi Cancel",
@@ -746,7 +746,7 @@ elif menu == "📦 Produk & Harga":
                 "Support Teknis via WhatsApp",
             ],
             "agents": [("🔍","The Auditor"),("🤝","The Liaison")],
-            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-LITE* V-Guard AI. Mohon informasi selanjutnya.",
+            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-LITE* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "PRO", "name": "V-PRO",
@@ -763,7 +763,7 @@ elif menu == "📦 Produk & Harga":
                 "Support Prioritas 24/7",
             ],
             "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe")],
-            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-PRO* V-Guard AI. Mohon informasi selanjutnya.",
+            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-PRO* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "SIGHT", "name": "V-SIGHT",
@@ -780,7 +780,7 @@ elif menu == "📦 Produk & Harga":
                 "Multi-Cabang Centralized Dashboard",
             ],
             "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog")],
-            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-SIGHT* V-Guard AI. Mohon informasi selanjutnya.",
+            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-SIGHT* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "ENT", "name": "V-ENTERPRISE",
@@ -814,7 +814,7 @@ elif menu == "📦 Produk & Harga":
                 "Dedicated AI Strategist (personal account manager)",
             ],
             "agents": [("🔍","The Auditor"),("👁️","The Visionary"),("✍️","The Scribe"),("📣","The Growth Hacker"),("🤝","The Liaison"),("🧪","The Simulator"),("⚙️","The Automator"),("🐕","The Watchdog"),("🧠","The Core Brain"),("👔","The Concierge")],
-            "wa_msg": "Halo Pak Erwin, saya ingin mendapatkan penawaran eksklusif paket *V-ULTRA* V-Guard AI. Mohon jadwalkan konsultasi strategis.",
+            "wa_msg": "Halo Admin, saya ingin mendapatkan penawaran eksklusif paket *V-ULTRA* V-Guard AI. Mohon jadwalkan konsultasi strategis.",
         },
     ]
 
@@ -843,7 +843,13 @@ elif menu == "📦 Produk & Harga":
             card_cls  = "pkg-card ultra" if pkg["ultra"] else ("pkg-card popular-card" if pkg["popular"] else "pkg-card")
             name_cls  = "pkg-name ultra" if pkg["ultra"] else "pkg-name"
             price_cls = "pkg-price ultra" if pkg["ultra"] else "pkg-price"
-
+            html_content = f"""
+                <div class='{card_cls}'>
+                    {label_html}
+                    <div class='{name_cls}'>{pkg['name']}</div>
+                    ... (isi html lainnya) ...
+                </div>
+            """
             st.markdown(f"""
             <div class='{card_cls}'>
                 {label_html}
@@ -876,7 +882,7 @@ elif menu == "📦 Produk & Harga":
                    font-size: 13px; font-weight: 700; border-radius: 7px;
                    padding: 12px 10px; text-align: center; text-decoration: none;
                    letter-spacing: 0.5px; box-shadow: 0 4px 20px #ffd70033;">
-                    👔 Hubungi Penasihat Strategis
+                    👔 Hubungi Admin
                 </a>
                 """, unsafe_allow_html=True)
             else:
