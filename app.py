@@ -824,8 +824,8 @@ elif menu == "📦 Produk & Harga":
 
     for col, pkg in zip(cols, PACKAGES):
         with col:
-            agent_html = "".join([
-                f"<div class='{'agent-pill ultra-pill' if pkg['ultra'] else 'agent-pill'}'>"
+            V-GUARD_html = "".join([
+                f"<div class='{'V-GUARD-pill ultra-pill' if pkg['ultra'] else 'V-GUARD-pill'}'>"
                 f"<div class='dot'></div>{icon} {aname}</div>"
                 for icon, aname in pkg["V-Guard AI"]
             ])
