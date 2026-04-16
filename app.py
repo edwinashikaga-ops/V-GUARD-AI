@@ -518,14 +518,14 @@ with st.sidebar:
 
     menu = st.radio(
         "",
-        ["🏠 Beranda", "📦 Produk & Harga", "📊 Kalkulator ROI", "🔑 Portal Klien"],
+        [" Beranda", " Produk & Harga", " Kalkulator ROI", " Portal Klien"],
         label_visibility="collapsed",
     )
 
     st.markdown("<hr style='border-color:#1e3352; margin: 16px 0;'>", unsafe_allow_html=True)
 
     # ── ADMIN ACCESS (DIPERBAIKI) ────────────────────────────────────────────
-    with st.expander("🔒 Admin Access"):
+    with st.expander("Admin Access"):
         if not st.session_state.admin_logged_in:
             admin_pw = st.text_input("Access Code", type="password", key="sidebar_admin_pw")
             if st.button("Masuk", key="btn_admin_login"):
@@ -1168,7 +1168,7 @@ elif menu == "📦 Produk & Harga":
 # ============================================================================
 # 9. KALKULATOR ROI
 # ============================================================================
-elif menu == "📊 Kalkulator ROI":
+elif menu == "Kalkulator ROI":
     st.markdown("<div style='padding: 40px 48px;'>", unsafe_allow_html=True)
     st.markdown(
         "<div class='page-title'>📊 Kalkulator <span style='color:#00d4ff;'>Kerugian & ROI</span></div>",
@@ -1282,7 +1282,7 @@ elif menu == "📊 Kalkulator ROI":
 # ============================================================================
 # 10. PORTAL KLIEN
 # ============================================================================
-elif menu == "🔑 Portal Klien":
+elif menu == " Portal Klien":
     st.markdown("<div style='padding: 40px 48px;'>", unsafe_allow_html=True)
     st.markdown(
         "<div class='page-title'>🔑 Portal <span style='color:#00d4ff;'>Klien</span></div>",
@@ -1458,7 +1458,7 @@ elif menu == "🔑 Portal Klien":
 # ============================================================================
 # 11. ADMIN CONTROL CENTER
 # ============================================================================
-elif menu == "⚙️ Admin Control Center":
+elif menu == " Admin Control Center":
     if not st.session_state.admin_logged_in:
         st.warning("⚠️ Halaman ini hanya untuk Admin. Gunakan panel Login di sidebar.")
         st.stop()
