@@ -827,7 +827,7 @@ elif menu == "📦 Produk & Harga":
             agent_html = "".join([
                 f"<div class='{'agent-pill ultra-pill' if pkg['ultra'] else 'agent-pill'}'>"
                 f"<div class='dot'></div>{icon} {aname}</div>"
-                for icon, aname in pkg["agents"]
+                for icon, aname in pkg["V-Guard AI"]
             ])
             feat_cls  = "pkg-feature ultra-feat" if pkg["ultra"] else "pkg-feature"
             feat_html = "".join([
