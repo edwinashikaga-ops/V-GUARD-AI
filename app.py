@@ -292,18 +292,12 @@ elif menu == "Portal Klien":
     db_error    = None
 
     # ── Koneksi ke Google Sheets ─────────────────────────────────────────────
+    # --- Koneksi ke Google Sheets ---
     try:
-        from streamlit_gsheets import GSheetsConnection
-
-        if "gsheets" not in st.secrets:
-            db_error = "Konfigurasi database belum diatur. Hubungi Admin."
-        else:
-            try:
-                conn       = st.connection("gsheets", type=GSheetsConnection)
-                df_clients = conn.read(spreadsheet=URL_SHEETS, ttl="5m")
-            except Exception as e:
-                db_error = f"Koneksi ke database gagal: {e}"
-
+        # Menarik data langsung menggunakan pandas tanpa perlu modul tambahan
+        df_clients = pd.read_csv(URL_SHEETS)
+    except Exception as e:
+        db_error = f"Koneksi ke database gagal: {e}"
     except ImportError:
         db_error = "Modul database tidak tersedia. Hubungi Admin."
 
