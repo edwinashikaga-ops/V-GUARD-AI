@@ -736,7 +736,7 @@ elif menu == "📦 Produk & Harga":
             "key": "LITE", "name": "V-LITE",
             "badge_cls": "badge-entry", "badge_txt": "Entry Level",
             "focus": "Fondasi keamanan digital untuk usaha satu kasir",
-            "price": "Rp 150rb", "period": "/ bulan", "setup": "Biaya pasang: Rp 250rb",
+            "price": "Rp 150rb", "period": "/ bulan", "setup": "Biaya pasang: Rp 350rb",
             "popular": False, "ultra": False,
             "features": [
                 "Deteksi VOID & Transaksi Cancel",
@@ -746,7 +746,7 @@ elif menu == "📦 Produk & Harga":
                 "Support Teknis via WhatsApp",
             ],
             "agents": [("🔍","The Auditor"),("🤝","The Liaison")],
-            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-LITE* V-Guard AI. Mohon informasi selanjutnya.",
+            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-LITE* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "PRO", "name": "V-PRO",
@@ -763,7 +763,7 @@ elif menu == "📦 Produk & Harga":
                 "Support Prioritas 24/7",
             ],
             "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe")],
-            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-PRO* V-Guard AI. Mohon informasi selanjutnya.",
+            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-PRO* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "SIGHT", "name": "V-SIGHT",
@@ -780,7 +780,7 @@ elif menu == "📦 Produk & Harga":
                 "Multi-Cabang Centralized Dashboard",
             ],
             "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog")],
-            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-SIGHT* V-Guard AI. Mohon informasi selanjutnya.",
+            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-SIGHT* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "ENT", "name": "V-ENTERPRISE",
@@ -797,7 +797,7 @@ elif menu == "📦 Produk & Harga":
                 "Executive SLA 99.9% Uptime",
             ],
             "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog"),("⚙️","The Automator"),("🧪","The Simulator")],
-            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-ENTERPRISE* V-Guard AI. Mohon informasi selanjutnya.",
+            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-ENTERPRISE* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "ULTRA", "name": "V-ULTRA",
@@ -814,7 +814,7 @@ elif menu == "📦 Produk & Harga":
                 "Dedicated AI Strategist (personal account manager)",
             ],
             "agents": [("🔍","The Auditor"),("👁️","The Visionary"),("✍️","The Scribe"),("📣","The Growth Hacker"),("🤝","The Liaison"),("🧪","The Simulator"),("⚙️","The Automator"),("🐕","The Watchdog"),("🧠","The Core Brain"),("👔","The Concierge")],
-            "wa_msg": "Halo Admin, saya ingin mendapatkan penawaran eksklusif paket *V-ULTRA* V-Guard AI. Mohon jadwalkan konsultasi strategis.",
+            "wa_msg": "Halo Pak Erwin, saya ingin mendapatkan penawaran eksklusif paket *V-ULTRA* V-Guard AI. Mohon jadwalkan konsultasi strategis.",
         },
     ]
 
@@ -843,21 +843,9 @@ elif menu == "📦 Produk & Harga":
             card_cls  = "pkg-card ultra" if pkg["ultra"] else ("pkg-card popular-card" if pkg["popular"] else "pkg-card")
             name_cls  = "pkg-name ultra" if pkg["ultra"] else "pkg-name"
             price_cls = "pkg-price ultra" if pkg["ultra"] else "pkg-price"
-        html_content = f"""
-        <div class='{card_cls}'>
-            {label_html}
-            <div class='{name_cls}'>{pkg['name']}</div>
-            <div class='{price_cls}'>{pkg['price']}</div>
-            <div class='pkg-setup'>{pkg['setup']}</div>
-            <hr class='pricing-divider'>
-            <div class='pkg-features'>{feat_html}</div>
-            <a href='{whatsapp_url}' class='{btn_cls}' target='_blank'>{btn_text}</a>
-            <div style='font-size:10px; color:#4a6a8a; font-family:monospace; margin-top:10px;'>
-                    V-GUARD SECURE PROTOCOL v1.0
-            </div>
-        """ # <--- INI ADALAH PENUTUP YANG BIKIN ERROR JIKA HILANG
-        st.markdown(html_content, unsafe_allow_html=True)
-        <div class='{card_cls}'>
+
+            st.markdown(f"""
+            <div class='{card_cls}'>
                 {label_html}
                 <div><span class='tier-badge {pkg["badge_cls"]}'>{pkg["badge_txt"]}</span></div>
                 <div class='{name_cls}'>{pkg["name"]}</div>
@@ -888,7 +876,7 @@ elif menu == "📦 Produk & Harga":
                    font-size: 13px; font-weight: 700; border-radius: 7px;
                    padding: 12px 10px; text-align: center; text-decoration: none;
                    letter-spacing: 0.5px; box-shadow: 0 4px 20px #ffd70033;">
-                    👔 Hubungi Admin
+                    👔 Hubungi Penasihat Strategis
                 </a>
                 """, unsafe_allow_html=True)
             else:
@@ -1087,7 +1075,7 @@ elif menu == "📊 Kalkulator ROI":
         </div>
         """, unsafe_allow_html=True)
 
-        r1, r2, r3, r4, r5 = st.columns(5)
+        r1, r2, r3 = st.columns(3)
         with r1:
             st.markdown(f"""
             <div class='stat-card' style='padding:18px;'>
@@ -1172,7 +1160,7 @@ elif menu == "🔑 Portal Klien":
                     url_tujuan = link_map.get(paket_aktif, "#")
                     st.link_button(f"🚀 Buka Panel {paket_aktif}", url_tujuan, use_container_width=True)
                     st.divider()
-                    m1, m2, m3 = st.columns(5)
+                    m1, m2, m3 = st.columns(3)
                     if paket_aktif == "V-LITE":
                         m1.metric("Kasir","Online"); m2.metric("Fraud Alert","0"); m3.info("Daily Summary Mode")
                     elif paket_aktif == "V-PRO":
