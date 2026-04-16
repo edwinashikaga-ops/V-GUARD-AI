@@ -847,11 +847,16 @@ elif menu == "📦 Produk & Harga":
                 <div class='{card_cls}'>
                     {label_html}
                     <div class='{name_cls}'>{pkg['name']}</div>
-                    ... (isi html lainnya) ...
+                    <div class='{price_cls}'>{pkg['price']}</div>
+                    <div class='pkg-setup'>{pkg['setup']}</div>
+                    <hr class='pricing-divider'>
+                    {feat_html}
+                    <a href='{whatsapp_url}' class='{btn_cls}' target='_blank'>{btn_text}</a>
                 </div>
-            """
-            st.markdown(html_content, unsafe_allow_html=True)
+            """ # <--- BARIS INI HARUS ADA UNTUK MENUTUP (Penyebab error baris 867)
 
+# Baris berikutnya: Tampilkan hasilnya
+            st.markdown(html_content, unsafe_allow_html=True)
             <div class='{card_cls}'>
                 {label_html}
                 <div><span class='tier-badge {pkg["badge_cls"]}'>{pkg["badge_txt"]}</span></div>
