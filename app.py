@@ -518,7 +518,7 @@ with st.sidebar:
 
     menu = st.radio(
         "",
-        [" Beranda", " Produk & Harga", " Kalkulator ROI", " Portal Klien"],
+        ["🏠 Beranda", "📦 Produk & Harga", "📊 Kalkulator ROI", "🔑 Portal Klien"],
         label_visibility="collapsed",
     )
 
