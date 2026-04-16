@@ -1082,7 +1082,7 @@ elif menu == "📊 Kalkulator ROI":
         </div>
         """, unsafe_allow_html=True)
 
-        r1, r2, r3 = st.columns(5)
+        r1, r2, r3, r4, r5 = st.columns(5)
         with r1:
             st.markdown(f"""
             <div class='stat-card' style='padding:18px;'>
