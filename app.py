@@ -850,6 +850,7 @@ elif menu == "📦 Produk & Harga":
                     ... (isi html lainnya) ...
                 </div>
             """
+            st.markdown(html_content, unsafe_allow_html=True)
             st.markdown(f"""
             <div class='{card_cls}'>
                 {label_html}
@@ -1081,7 +1082,7 @@ elif menu == "📊 Kalkulator ROI":
         </div>
         """, unsafe_allow_html=True)
 
-        r1, r2, r3 = st.columns(3)
+        r1, r2, r3 = st.columns(5)
         with r1:
             st.markdown(f"""
             <div class='stat-card' style='padding:18px;'>
@@ -1166,7 +1167,7 @@ elif menu == "🔑 Portal Klien":
                     url_tujuan = link_map.get(paket_aktif, "#")
                     st.link_button(f"🚀 Buka Panel {paket_aktif}", url_tujuan, use_container_width=True)
                     st.divider()
-                    m1, m2, m3 = st.columns(3)
+                    m1, m2, m3 = st.columns(5)
                     if paket_aktif == "V-LITE":
                         m1.metric("Kasir","Online"); m2.metric("Fraud Alert","0"); m3.info("Daily Summary Mode")
                     elif paket_aktif == "V-PRO":
