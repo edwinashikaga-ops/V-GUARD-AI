@@ -14,7 +14,11 @@ except ImportError:
 # ============================================================================
 # 1. PENGATURAN AI & KEAMANAN
 # ============================================================================
-gemini_key = os.environ.get("GEMINI_API_KEY")
+# GANTI JADI INI:
+gemini_key = st.secrets.get("GEMINI_API_KEY")
+
+# Kode lengkapnya:
+gemini_key = st.secrets.get("GEMINI_API_KEY")
 ai_status_msg = "Mode Offline"
 model_vguard = None
 
@@ -25,7 +29,6 @@ if gemini_key and GENAI_AVAILABLE:
         ai_status_msg = "Connected"
     except Exception:
         ai_status_msg = "Error Connection"
-
 # ============================================================================
 # 2. KONFIGURASI HALAMAN
 # ============================================================================
