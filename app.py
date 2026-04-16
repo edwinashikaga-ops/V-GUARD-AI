@@ -745,7 +745,7 @@ elif menu == "📦 Produk & Harga":
                 "Laporan Kebocoran Otomatis",
                 "Support Teknis via WhatsApp",
             ],
-            "agents": [("🔍","The Auditor"),("🤝","The Liaison")],
+            "V-Guard AI": [("🔍","The Auditor"),("🤝","The Liaison")],
             "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-LITE* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
@@ -762,8 +762,8 @@ elif menu == "📦 Produk & Harga":
                 "Laporan PDF Terjadwal",
                 "Support Prioritas 24/7",
             ],
-            "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe")],
-            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-PRO* V-Guard AI. Mohon informasi selanjutnya.",
+            "V-Guard AI": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe")],
+            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-PRO* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "SIGHT", "name": "V-SIGHT",
@@ -779,8 +779,8 @@ elif menu == "📦 Produk & Harga":
                 "H-7 Auto Collection Reminder",
                 "Multi-Cabang Centralized Dashboard",
             ],
-            "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog")],
-            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-SIGHT* V-Guard AI. Mohon informasi selanjutnya.",
+            "V-Guard AI": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog")],
+            "wa_msg": "Halo Pak Admin, saya ingin berlangganan paket *V-SIGHT* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "ENT", "name": "V-ENTERPRISE",
@@ -796,8 +796,8 @@ elif menu == "📦 Produk & Harga":
                 "On-site Implementation Support",
                 "Executive SLA 99.9% Uptime",
             ],
-            "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog"),("⚙️","The Automator"),("🧪","The Simulator")],
-            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-ENTERPRISE* V-Guard AI. Mohon informasi selanjutnya.",
+            "V-Guard AI": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog"),("⚙️","The Automator"),("🧪","The Simulator")],
+            "wa_msg": "Halo Pak Admin, saya ingin berlangganan paket *V-ENTERPRISE* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "ULTRA", "name": "V-ULTRA",
@@ -813,8 +813,8 @@ elif menu == "📦 Produk & Harga":
                 "10 Elite AI Squad aktif serentak",
                 "Dedicated AI Strategist (personal account manager)",
             ],
-            "agents": [("🔍","The Auditor"),("👁️","The Visionary"),("✍️","The Scribe"),("📣","The Growth Hacker"),("🤝","The Liaison"),("🧪","The Simulator"),("⚙️","The Automator"),("🐕","The Watchdog"),("🧠","The Core Brain"),("👔","The Concierge")],
-            "wa_msg": "Halo Pak Erwin, saya ingin mendapatkan penawaran eksklusif paket *V-ULTRA* V-Guard AI. Mohon jadwalkan konsultasi strategis.",
+            "V-Guard AI": [("🔍","The Auditor"),("👁️","The Visionary"),("✍️","The Scribe"),("📣","The Growth Hacker"),("🤝","The Liaison"),("🧪","The Simulator"),("⚙️","The Automator"),("🐕","The Watchdog"),("🧠","The Core Brain"),("👔","The Concierge")],
+            "wa_msg": "Halo  Admin, saya ingin mendapatkan penawaran eksklusif paket *V-ULTRA* V-Guard AI. Mohon jadwalkan konsultasi strategis.",
         },
     ]
 
@@ -876,7 +876,7 @@ elif menu == "📦 Produk & Harga":
                    font-size: 13px; font-weight: 700; border-radius: 7px;
                    padding: 12px 10px; text-align: center; text-decoration: none;
                    letter-spacing: 0.5px; box-shadow: 0 4px 20px #ffd70033;">
-                    👔 Hubungi Penasihat Strategis
+                    👔 Hubungi Admin
                 </a>
                 """, unsafe_allow_html=True)
             else:
