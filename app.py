@@ -797,7 +797,7 @@ elif menu == "📦 Produk & Harga":
                 "Executive SLA 99.9% Uptime",
             ],
             "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog"),("⚙️","The Automator"),("🧪","The Simulator")],
-            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-ENTERPRISE* V-Guard AI. Mohon informasi selanjutnya.",
+            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-ENTERPRISE* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "ULTRA", "name": "V-ULTRA",
