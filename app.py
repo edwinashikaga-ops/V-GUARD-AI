@@ -745,7 +745,7 @@ elif menu == "📦 Produk & Harga":
                 "Laporan Kebocoran Otomatis",
                 "Support Teknis via WhatsApp",
             ],
-            "V-Guard AI": [("🔍","The Auditor"),("🤝","The Liaison")],
+            "agents": [("🔍","The Auditor"),("🤝","The Liaison")],
             "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-LITE* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
@@ -762,8 +762,8 @@ elif menu == "📦 Produk & Harga":
                 "Laporan PDF Terjadwal",
                 "Support Prioritas 24/7",
             ],
-            "V-Guard AI": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe")],
-            "wa_msg": "Halo Admin, saya ingin berlangganan paket *V-PRO* V-Guard AI. Mohon informasi selanjutnya.",
+            "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe")],
+            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-PRO* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "SIGHT", "name": "V-SIGHT",
@@ -779,8 +779,8 @@ elif menu == "📦 Produk & Harga":
                 "H-7 Auto Collection Reminder",
                 "Multi-Cabang Centralized Dashboard",
             ],
-            "V-Guard AI": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog")],
-            "wa_msg": "Halo Pak Admin, saya ingin berlangganan paket *V-SIGHT* V-Guard AI. Mohon informasi selanjutnya.",
+            "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog")],
+            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-SIGHT* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "ENT", "name": "V-ENTERPRISE",
@@ -796,8 +796,8 @@ elif menu == "📦 Produk & Harga":
                 "On-site Implementation Support",
                 "Executive SLA 99.9% Uptime",
             ],
-            "V-Guard AI": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog"),("⚙️","The Automator"),("🧪","The Simulator")],
-            "wa_msg": "Halo Pak Admin, saya ingin berlangganan paket *V-ENTERPRISE* V-Guard AI. Mohon informasi selanjutnya.",
+            "agents": [("🔍","The Auditor"),("🤝","The Liaison"),("✍️","The Scribe"),("👁️","The Visionary"),("🐕","The Watchdog"),("⚙️","The Automator"),("🧪","The Simulator")],
+            "wa_msg": "Halo Pak Erwin, saya ingin berlangganan paket *V-ENTERPRISE* V-Guard AI. Mohon informasi selanjutnya.",
         },
         {
             "key": "ULTRA", "name": "V-ULTRA",
@@ -813,8 +813,8 @@ elif menu == "📦 Produk & Harga":
                 "10 Elite AI Squad aktif serentak",
                 "Dedicated AI Strategist (personal account manager)",
             ],
-            "V-Guard AI": [("🔍","The Auditor"),("👁️","The Visionary"),("✍️","The Scribe"),("📣","The Growth Hacker"),("🤝","The Liaison"),("🧪","The Simulator"),("⚙️","The Automator"),("🐕","The Watchdog"),("🧠","The Core Brain"),("👔","The Concierge")],
-            "wa_msg": "Halo  Admin, saya ingin mendapatkan penawaran eksklusif paket *V-ULTRA* V-Guard AI. Mohon jadwalkan konsultasi strategis.",
+            "agents": [("🔍","The Auditor"),("👁️","The Visionary"),("✍️","The Scribe"),("📣","The Growth Hacker"),("🤝","The Liaison"),("🧪","The Simulator"),("⚙️","The Automator"),("🐕","The Watchdog"),("🧠","The Core Brain"),("👔","The Concierge")],
+            "wa_msg": "Halo Pak Erwin, saya ingin mendapatkan penawaran eksklusif paket *V-ULTRA* V-Guard AI. Mohon jadwalkan konsultasi strategis.",
         },
     ]
 
@@ -824,10 +824,10 @@ elif menu == "📦 Produk & Harga":
 
     for col, pkg in zip(cols, PACKAGES):
         with col:
-            v-guard_html = "".join([
-                f"<div class='{'V-GUARD-pill ultra-pill' if pkg['ultra'] else 'v-guard'}'>"
+            agent_html = "".join([
+                f"<div class='{'agent-pill ultra-pill' if pkg['ultra'] else 'agent-pill'}'>"
                 f"<div class='dot'></div>{icon} {aname}</div>"
-                for icon, aname in pkg["v-guard"]
+                for icon, aname in pkg["agents"]
             ])
             feat_cls  = "pkg-feature ultra-feat" if pkg["ultra"] else "pkg-feature"
             feat_html = "".join([
@@ -876,7 +876,7 @@ elif menu == "📦 Produk & Harga":
                    font-size: 13px; font-weight: 700; border-radius: 7px;
                    padding: 12px 10px; text-align: center; text-decoration: none;
                    letter-spacing: 0.5px; box-shadow: 0 4px 20px #ffd70033;">
-                    👔 Hubungi Admin
+                    👔 Hubungi Penasihat Strategis
                 </a>
                 """, unsafe_allow_html=True)
             else:
@@ -904,7 +904,7 @@ elif menu == "📦 Produk & Harga":
     st.markdown("""
     <div style='padding: 0 48px;'>
         <div class='comp-section-title'>
-            🤖 V-GUARD AI — <span style='color:#00d4ff;'>Siapa & Bertugas Apa?</span>
+            🤖 10 Elite AI Squad — <span style='color:#00d4ff;'>Siapa & Bertugas Apa?</span>
         </div>
         <div class='comp-section-sub'>
             Setiap paket mengaktifkan kombinasi agen yang berbeda. Semakin tinggi tier,
