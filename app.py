@@ -851,7 +851,7 @@ elif menu == "📦 Produk & Harga":
                 </div>
             """
             st.markdown(html_content, unsafe_allow_html=True)
-            st.markdown(f"""
+
             <div class='{card_cls}'>
                 {label_html}
                 <div><span class='tier-badge {pkg["badge_cls"]}'>{pkg["badge_txt"]}</span></div>
