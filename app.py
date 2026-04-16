@@ -843,22 +843,23 @@ elif menu == "📦 Produk & Harga":
             card_cls  = "pkg-card ultra" if pkg["ultra"] else ("pkg-card popular-card" if pkg["popular"] else "pkg-card")
             name_cls  = "pkg-name ultra" if pkg["ultra"] else "pkg-name"
             price_cls = "pkg-price ultra" if pkg["ultra"] else "pkg-price"
-            # --- BARIS 846 DIMULAI DI SINI ---
-            html_content = f"""
-                <div class='{card_cls}'>
-                    {label_html}
-                    <div class='{name_cls}'>{pkg['name']}</div>
-                    <div class='{price_cls}'>{pkg['price']}</div>
-                    <div class='pkg-setup'>{pkg['setup']}</div>
-                    <hr class='pricing-divider'>
-                    {feat_html}
-                    <a href='{whatsapp_url}' class='{btn_cls}' target='_blank'>{btn_text}</a>
-                    <div style='font-size:10px; color:#4a6a8a; font-family:monospace; margin-top:10px;'>
-                        V-GUARD SECURE PROTOCOL v1.0
-                    </div>
+
+            # --- MULAI BARIS 846 ---
+        html_content = f"""
+            <div class='{card_cls}'>
+                {label_html}
+                <div class='{name_cls}'>{pkg['name']}</div>
+                <div class='{price_cls}'>{pkg['price']}</div>
+                <div class='pkg-setup'>{pkg['setup']}</div>
+                <hr class='pricing-divider'>
+                <div class='pkg-features'>{feat_html}</div>
+                <a href='{whatsapp_url}' class='{btn_cls}' target='_blank'>{btn_text}</a>
+                <div style='font-size:10px; color:#4a6a8a; font-family:monospace; margin-top:10px;'>
+                    V-GUARD SECURE PROTOCOL v1.0
                 </div>
-            """ # <--- PENUTUP INI HARUS ADA, JANGAN DIHAPUS
-            st.markdown(html_content, unsafe_allow_html=True)
+            </div>
+        """ # <--- INI ADALAH PENUTUP YANG BIKIN ERROR JIKA HILANG
+        st.markdown(html_content, unsafe_allow_html=True)
             <div class='{card_cls}'>
                 {label_html}
                 <div><span class='tier-badge {pkg["badge_cls"]}'>{pkg["badge_txt"]}</span></div>
