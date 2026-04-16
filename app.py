@@ -843,6 +843,7 @@ elif menu == "📦 Produk & Harga":
             card_cls  = "pkg-card ultra" if pkg["ultra"] else ("pkg-card popular-card" if pkg["popular"] else "pkg-card")
             name_cls  = "pkg-name ultra" if pkg["ultra"] else "pkg-name"
             price_cls = "pkg-price ultra" if pkg["ultra"] else "pkg-price"
+            # --- BARIS 846 DIMULAI DI SINI ---
             html_content = f"""
                 <div class='{card_cls}'>
                     {label_html}
@@ -852,10 +853,11 @@ elif menu == "📦 Produk & Harga":
                     <hr class='pricing-divider'>
                     {feat_html}
                     <a href='{whatsapp_url}' class='{btn_cls}' target='_blank'>{btn_text}</a>
+                    <div style='font-size:10px; color:#4a6a8a; font-family:monospace; margin-top:10px;'>
+                        V-GUARD SECURE PROTOCOL v1.0
+                    </div>
                 </div>
-            """ # <--- BARIS INI HARUS ADA UNTUK MENUTUP (Penyebab error baris 867)
-
-# Baris berikutnya: Tampilkan hasilnya
+            """ # <--- PENUTUP INI HARUS ADA, JANGAN DIHAPUS
             st.markdown(html_content, unsafe_allow_html=True)
             <div class='{card_cls}'>
                 {label_html}
