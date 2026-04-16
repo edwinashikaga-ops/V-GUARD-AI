@@ -857,7 +857,7 @@ elif menu == "📦 Produk & Harga":
             </div>
         """ # <--- INI ADALAH PENUTUP YANG BIKIN ERROR JIKA HILANG
         st.markdown(html_content, unsafe_allow_html=True)
-            <div class='{card_cls}'>
+        <div class='{card_cls}'>
                 {label_html}
                 <div><span class='tier-badge {pkg["badge_cls"]}'>{pkg["badge_txt"]}</span></div>
                 <div class='{name_cls}'>{pkg["name"]}</div>
