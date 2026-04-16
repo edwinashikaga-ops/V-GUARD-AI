@@ -904,7 +904,7 @@ elif menu == "📦 Produk & Harga":
     st.markdown("""
     <div style='padding: 0 48px;'>
         <div class='comp-section-title'>
-            🤖 10 Elite AI Squad — <span style='color:#00d4ff;'>Siapa & Bertugas Apa?</span>
+            🤖 V-GUARD AI — <span style='color:#00d4ff;'>Siapa & Bertugas Apa?</span>
         </div>
         <div class='comp-section-sub'>
             Setiap paket mengaktifkan kombinasi agen yang berbeda. Semakin tinggi tier,
