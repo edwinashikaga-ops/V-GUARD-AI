@@ -10,7 +10,7 @@ import pandas as pd
 import datetime
 
 # =============================================================================
-# 1. MULTI-CHANNEL TRACKING  ←  WAJIB DI PALING ATAS
+# 1. MULTI-CHANNEL TRACKING  ← WAJIB DI PALING ATAS
 # =============================================================================
 _qp = st.query_params
 if "tracking_ref" not in st.session_state:
@@ -19,7 +19,7 @@ if "tracking_source" not in st.session_state:
     st.session_state["tracking_source"] = _qp.get("source", "organic")
 
 # =============================================================================
-# 2. AI ENGINE
+# 2. AI ENGINE — Menggunakan st.secrets["GOOGLE_API_KEY"]
 # =============================================================================
 try:
     import google.generativeai as genai
@@ -27,17 +27,27 @@ try:
 except ImportError:
     GENAI_AVAILABLE = False
 
-_gemini_key   = os.environ.get("GEMINI_API_KEY")
-ai_status_msg = "Mode Offline"
+_google_key   = None
+ai_status     = "offline"
+ai_status_msg = "🔴 AI Engine: Mode Offline"
 model_vguard  = None
 
-if _gemini_key and GENAI_AVAILABLE:
+try:
+    _google_key = st.secrets["GOOGLE_API_KEY"]
+except Exception:
+    _google_key = None
+
+if _google_key and GENAI_AVAILABLE:
     try:
-        genai.configure(api_key=_gemini_key)
+        genai.configure(api_key=_google_key)
         model_vguard  = genai.GenerativeModel("gemini-1.5-flash")
-        ai_status_msg = "Connected"
-    except Exception:
-        ai_status_msg = "Error Connection"
+        ai_status     = "online"
+        ai_status_msg = "🟢 AI Engine: Online"
+    except Exception as _e:
+        if "429" in str(_e) or "quota" in str(_e).lower():
+            ai_status_msg = "🔴 AI Engine: Mode Offline (Kuota Habis)"
+        else:
+            ai_status_msg = "🔴 AI Engine: Mode Offline"
 
 # =============================================================================
 # 3. PAGE CONFIG
@@ -53,11 +63,11 @@ st.set_page_config(
 # 4. SESSION STATE
 # =============================================================================
 _DEFAULTS = {
-    "admin_logged_in":  False,
-    "system_status":    "Healthy",
-    "db_umum":          [],
-    "api_cost_total":   0.0,
-    "cs_chat_history":  [],
+    "admin_logged_in":   False,
+    "system_status":     "Healthy",
+    "db_umum":           [],
+    "api_cost_total":    0.0,
+    "cs_chat_history":   [],
     "agent_kill_switch": {},
     "social_status": {
         "linkedin":  {"active": True,  "posts_today": 3, "last_post": "09:00", "leads": 12},
@@ -74,16 +84,24 @@ for _k, _v in _DEFAULTS.items():
 # =============================================================================
 # 5. CONSTANTS
 # =============================================================================
-WA_NUMBER    = "6282122190885"
+WA_NUMBER      = "6282122190885"
 WA_LINK_DEMO   = "https://wa.me/" + WA_NUMBER + "?text=" + urllib.parse.quote("Halo Pak Erwin, saya ingin Book Demo V-Guard AI.")
 WA_LINK_KONSUL = "https://wa.me/" + WA_NUMBER + "?text=" + urllib.parse.quote("Halo Pak Erwin, saya ingin konsultasi mengenai V-Guard AI.")
 
 HARGA_MAP = {
-    "V-LITE":       ("Rp 150.000",       "Rp 250.000"),
-    "V-PRO":        ("Rp 450.000",       "Rp 750.000"),
-    "V-SIGHT":      ("Rp 1.200.000",     "Rp 3.500.000"),
-    "V-ENTERPRISE": ("Mulai Rp 3.500.000","Rp 10.000.000"),
-    "V-ULTRA":      ("Custom",            "Konsultasi"),
+    "V-LITE":    ("Rp 150.000",          "Rp 250.000"),
+    "V-PRO":     ("Rp 450.000",          "Rp 750.000"),
+    "V-ADVANCE": ("Rp 1.200.000",        "Rp 3.500.000"),
+    "V-ELITE":   ("Mulai Rp 3.500.000",  "Rp 10.000.000"),
+    "V-ULTRA":   ("Custom",              "Konsultasi"),
+}
+
+HARGA_NUMERIK = {
+    "V-LITE":    150_000,
+    "V-PRO":     450_000,
+    "V-ADVANCE": 1_200_000,
+    "V-ELITE":   3_500_000,
+    "V-ULTRA":   0,
 }
 
 SOURCE_MAP = {
@@ -96,38 +114,36 @@ SOURCE_MAP = {
     "organic":   "Organik / Langsung",
 }
 
-SOCIAL_ICONS = {
-    "linkedin": "in", "facebook": "f", "tiktok": "tt",
-    "instagram": "ig", "youtube": "yt",
-}
-
 CS_SYSTEM_PROMPT = """
 Anda adalah Sentinel CS — Customer Service AI resmi V-Guard AI Intelligence.
 
 === PRODUK & HARGA ===
-- V-LITE       : Rp 150.000/bln + Setup Rp 250.000    | 1 kasir, deteksi VOID, daily WA summary
-- V-PRO        : Rp 450.000/bln + Setup Rp 750.000    | kasir otomatis, audit bank, OCR invoice
-- V-SIGHT      : Rp 1.200.000/bln + Setup Rp 3.500.000 | CCTV AI overlay, multi-cabang, WA alarm
-- V-ENTERPRISE : Mulai Rp 3.500.000/bln + Setup Rp 10.000.000 | server privat, AI forensik
-- V-ULTRA      : Custom Quote                          | white-label, 10 AI agents, C-level dashboard
+- V-LITE    : Rp 150.000/bln + Setup Rp 250.000     | 1 kasir, deteksi VOID, daily WA summary
+- V-PRO     : Rp 450.000/bln + Setup Rp 750.000     | kasir otomatis, audit bank, OCR invoice
+- V-ADVANCE : Rp 1.200.000/bln + Setup Rp 3.500.000  | CCTV AI overlay, multi-cabang, WA alarm
+- V-ELITE   : Mulai Rp 3.500.000/bln + Setup Rp 10.000.000 | server privat, AI forensik
+- V-ULTRA   : Custom Quote | white-label, 10 AI agents, C-level dashboard
 
-=== INSTALASI — BEDAKAN DENGAN JELAS ===
-- V-LITE & V-PRO  → PLUG & PLAY (mandiri, tanpa teknisi, tanpa ribet kabel)
-- V-SIGHT, V-ENTERPRISE, V-ULTRA → INTEGRASI KHUSUS oleh teknisi profesional V-Guard
+=== INSTALASI — BEDAKAN DENGAN SANGAT JELAS ===
+- V-LITE & V-PRO     → PLUG & PLAY SAJA (mandiri, tanpa teknisi, tanpa ribet kabel)
+- V-ADVANCE, V-ELITE, V-ULTRA → WAJIB integrasi khusus oleh teknisi profesional V-Guard ke lokasi
 
-=== KALKULASI ROI ===
+=== KALKULASI ROI / SHRINKAGE ===
 - Rata-rata kebocoran bisnis: 3–15% omzet
 - V-Guard mencegah hingga 88% kebocoran
 - Penghematan/bulan = Omzet × % Kebocoran × 88%
 - ROI = (Penghematan − Biaya Paket) / Biaya Paket × 100%
+- Contoh: Omzet Rp 100 juta, bocor 5% → Rp 5 juta bocor → diselamatkan Rp 4,4 juta/bln
+  Pakai V-PRO Rp 450rb → ROI = (4.400.000 - 450.000) / 450.000 × 100% = 878%
 
 === INSTRUKSI WAJIB ===
 1. Tanya dulu: jumlah kasir/cabang dan estimasi omzet bulanan.
-2. Hitung ROI jika user memberikan angka.
-3. Setelah rekomendasi paket, SELALU sertakan link order:
-   https://wa.me/6282122190885
-4. Bahasa Indonesia, ramah, profesional, ringkas.
-5. Jangan berbohong tentang fitur — jujur dan transparan.
+2. Hitung ROI (shrinkage) jika user memberikan angka.
+3. Tekankan dengan tegas: "Plug n Play HANYA untuk V-LITE & V-PRO. Paket V-ADVANCE ke atas butuh teknisi V-Guard."
+4. Setelah rekomendasi paket, SELALU tambahkan: "Lihat detail lengkap di menu Produk & Harga."
+5. SELALU sertakan link konsultasi: https://wa.me/6282122190885
+6. Bahasa Indonesia, ramah, profesional, ringkas.
+7. Jangan berbohong tentang fitur — jujur dan transparan.
 """
 
 # =============================================================================
@@ -174,7 +190,7 @@ def get_sample_transaksi():
                          "Outlet Sudirman","Resto Central","Cabang Tangerang","Outlet Sudirman"],
         "Kasir":        ["Budi","Budi","Sari","Andi","Budi","Sari","Andi","Dewi"],
         "Jumlah":       [150000,150000,500000,200000,150000,300000,50000,75000],
-        "Waktu":        [
+        "Waktu": [
             now - datetime.timedelta(minutes=2), now - datetime.timedelta(minutes=3),
             now - datetime.timedelta(hours=1),   now - datetime.timedelta(hours=2),
             now - datetime.timedelta(minutes=4), now - datetime.timedelta(hours=3),
@@ -186,16 +202,23 @@ def get_sample_transaksi():
     })
 
 def scan_fraud_lokal(df):
-    void_df   = df[df["Status"] == "VOID"].copy()
-    df_s      = df.sort_values(["Kasir","Jumlah","Waktu"]).copy()
+    void_df = df[df["Status"] == "VOID"].copy()
+    df_s    = df.sort_values(["Kasir","Jumlah","Waktu"]).copy()
     df_s["selisih_menit"] = (
         df_s.groupby(["Kasir","Jumlah"])["Waktu"].diff().dt.total_seconds().div(60)
     )
-    fraud_df  = df_s[df_s["selisih_menit"] < 5].copy()
-    df2       = df.copy()
+    fraud_df = df_s[df_s["selisih_menit"] < 5].copy()
+    df2      = df.copy()
     df2["selisih_saldo"] = df2["Saldo_Sistem"] - df2["Saldo_Fisik"]
-    sus_df    = df2[df2["selisih_saldo"] != 0].copy()
+    sus_df   = df2[df2["selisih_saldo"] != 0].copy()
     return {"void": void_df, "fraud": fraud_df, "suspicious": sus_df}
+
+def hitung_proyeksi_omset(db_umum):
+    total = 0
+    for k in db_umum:
+        if k.get("Status") == "Aktif":
+            total += HARGA_NUMERIK.get(k.get("Produk", "V-LITE"), 0)
+    return total
 
 # =============================================================================
 # 7. CSS — Dark Cyber Security Theme
@@ -282,21 +305,23 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
-/* ── Packages ── */
-.tier-badge{display:inline-block;font-family:'JetBrains Mono',monospace!important;font-size:10px!important;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
-.badge-entry{background:#00d4ff18;color:#00d4ff!important;border:1px solid #00d4ff55;}
-.badge-pro{background:#0091ff18;color:#6ac8ff!important;border:1px solid #0091ff55;}
-.badge-sight{background:#7b2fff18;color:#b49fff!important;border:1px solid #7b2fff55;}
-.badge-ent{background:#00e67618;color:#00e676!important;border:1px solid #00e67655;}
-.badge-ultra{background:#ffd70018;color:#ffd700!important;border:1px solid #ffd70055;}
+/* ── Packages EQUAL HEIGHT via Flexbox ── */
+.pkg-grid-row{display:flex;flex-direction:row;gap:12px;align-items:stretch;}
 .pkg-card{background:#101c2e;border:1px solid #1e3352;border-radius:14px;padding:22px 16px 20px;display:flex;flex-direction:column;height:100%;transition:all .3s ease;position:relative;}
 .pkg-card:hover{border-color:#00d4ff;box-shadow:0 0 28px #00d4ff11;transform:translateY(-4px);}
 .pkg-card-ultra{background:linear-gradient(160deg,#12100a 0%,#1a1500 60%,#0e0e0e 100%);border:1px solid #ffd70055;border-radius:14px;padding:22px 16px 20px;display:flex;flex-direction:column;height:100%;transition:all .3s ease;position:relative;}
 .pkg-card-ultra:hover{border-color:#ffd700;box-shadow:0 0 32px #ffd70022;transform:translateY(-4px);}
 .pkg-card-popular{background:#101c2e;border:1.5px solid #0091ff;border-radius:14px;padding:22px 16px 20px;display:flex;flex-direction:column;height:100%;transition:all .3s ease;position:relative;}
 .pkg-card-popular:hover{border-color:#00d4ff;box-shadow:0 0 28px #00d4ff11;transform:translateY(-4px);}
+.pkg-features-grow{flex-grow:1;}
 .hot-label{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#0091ff,#00d4ff);color:#000!important;font-family:'Rajdhani',sans-serif!important;font-size:10px!important;font-weight:700!important;padding:3px 14px;border-radius:20px;letter-spacing:1px;white-space:nowrap;}
 .ultra-label{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#b8860b,#ffd700);color:#000!important;font-family:'Rajdhani',sans-serif!important;font-size:10px!important;font-weight:700!important;padding:3px 14px;border-radius:20px;letter-spacing:1px;white-space:nowrap;}
+.tier-badge{display:inline-block;font-family:'JetBrains Mono',monospace!important;font-size:10px!important;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+.badge-entry{background:#00d4ff18;color:#00d4ff!important;border:1px solid #00d4ff55;}
+.badge-pro{background:#0091ff18;color:#6ac8ff!important;border:1px solid #0091ff55;}
+.badge-adv{background:#7b2fff18;color:#b49fff!important;border:1px solid #7b2fff55;}
+.badge-ent{background:#00e67618;color:#00e676!important;border:1px solid #00e67655;}
+.badge-ultra{background:#ffd70018;color:#ffd700!important;border:1px solid #ffd70055;}
 .pkg-name{font-family:'Rajdhani',sans-serif!important;font-size:20px!important;font-weight:700!important;color:#e8f4ff!important;margin-bottom:2px;}
 .pkg-name-ultra{font-family:'Rajdhani',sans-serif!important;font-size:20px!important;font-weight:700!important;color:#ffd700!important;margin-bottom:2px;}
 .pkg-focus{font-size:11px!important;color:#7a9bbf!important;line-height:1.4;margin-bottom:14px;}
@@ -313,6 +338,16 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 .install-pnp{background:#00e67618;color:#00e676!important;border:1px solid #00e67644;}
 .install-pro{background:#ffab0018;color:#ffab00!important;border:1px solid #ffab0044;}
 
+/* ── CS Chatbot Section ── */
+.cs-section{background:linear-gradient(135deg,#060b14,#0a1628);border-top:1px solid #1e3352;padding:56px 48px;}
+.chat-bubble-user{background:linear-gradient(135deg,#0091ff,#00d4ff);color:#000!important;padding:12px 16px;border-radius:14px 14px 4px 14px;font-size:14px;margin-bottom:8px;max-width:80%;margin-left:auto;}
+.chat-bubble-ai{background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary)!important;padding:12px 16px;border-radius:14px 14px 14px 4px;font-size:14px;margin-bottom:8px;max-width:85%;}
+.chat-label{font-size:11px!important;color:var(--text-muted)!important;margin-bottom:3px;font-family:'JetBrains Mono',monospace!important;}
+
+/* ── Affiliate ── */
+.affiliate-banner{background:linear-gradient(135deg,#00e67618,#00d4ff11);border:1px solid #00e67644;border-radius:12px;padding:20px 24px;margin-bottom:24px;}
+.ref-link-box{background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#00d4ff;word-break:break-all;}
+
 /* ── Admin / War Room ── */
 .war-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:12px;}
 .war-title{font-family:'Rajdhani',sans-serif!important;font-size:16px!important;font-weight:700!important;color:var(--accent)!important;margin-bottom:4px;}
@@ -327,15 +362,6 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 .client-badge-aktif{display:inline-block;background:#00e67618;color:#00e676!important;border:1px solid #00e67644;border-radius:20px;font-size:10px!important;padding:2px 10px;font-family:'JetBrains Mono',monospace!important;}
 .client-badge-pending{display:inline-block;background:#ffab0018;color:#ffab00!important;border:1px solid #ffab0044;border-radius:20px;font-size:10px!important;padding:2px 10px;font-family:'JetBrains Mono',monospace!important;}
 .client-link{font-family:'JetBrains Mono',monospace!important;font-size:10px!important;color:#4a6a8a!important;word-break:break-all;margin-top:6px;padding:6px 10px;background:#060b14;border-radius:4px;border:1px solid #1e3352;}
-
-/* ── CS Chat ── */
-.chat-bubble-user{background:linear-gradient(135deg,#0091ff,#00d4ff);color:#000!important;padding:12px 16px;border-radius:14px 14px 4px 14px;font-size:14px;margin-bottom:8px;max-width:80%;margin-left:auto;}
-.chat-bubble-ai{background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary)!important;padding:12px 16px;border-radius:14px 14px 14px 4px;font-size:14px;margin-bottom:8px;max-width:85%;}
-.chat-label{font-size:11px!important;color:var(--text-muted)!important;margin-bottom:3px;font-family:'JetBrains Mono',monospace!important;}
-
-/* ── Affiliate ── */
-.affiliate-banner{background:linear-gradient(135deg,#00e67618,#00d4ff11);border:1px solid #00e67644;border-radius:12px;padding:20px 24px;margin-bottom:24px;}
-.ref-link-box{background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#00d4ff;word-break:break-all;}
 .login-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:36px;}
 </style>
 """, unsafe_allow_html=True)
@@ -349,7 +375,7 @@ st.markdown(
 )
 
 # =============================================================================
-# 9. SIDEBAR
+# 9. SIDEBAR — Teks Murni, Tanpa Ikon/Emoji
 # =============================================================================
 with st.sidebar:
     st.markdown("""
@@ -366,7 +392,7 @@ with st.sidebar:
             <p style='color:#7a9bbf;font-size:12px;'>Founder & CEO</p>
         </div>""", unsafe_allow_html=True)
 
-    # ── Tracking indicator (subtle) ──
+    # Tracking indicator (subtle)
     _src = st.session_state.get("tracking_source", "organic")
     _ref = st.session_state.get("tracking_ref", "")
     if _ref:
@@ -384,22 +410,21 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
+    # Menu: 5 item, teks murni tanpa ikon/emoji
     MENU_ITEMS = [
         "Beranda",
         "Produk & Harga",
         "Kalkulator ROI",
         "Portal Klien",
-        "Customer Service AI",
         "Admin Access",
     ]
     menu = st.radio("", MENU_ITEMS, label_visibility="collapsed")
 
     st.markdown("<hr style='border-color:#1e3352;margin:16px 0;'>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='margin-top:8px;padding:12px;background:#101c2e;border-radius:8px;border:1px solid #1e3352;'>"
-        "<span class='status-dot'></span>"
-        "<span style='font-size:12px;color:#7a9bbf;'>AI Engine: <b style='color:#00d4ff;'>"
-        + ai_status_msg + "</b></span></div>",
+        "<div style='margin-top:8px;padding:12px;background:#101c2e;border-radius:8px;"
+        "border:1px solid #1e3352;'>"
+        "<span style='font-size:12px;color:#7a9bbf;'>" + ai_status_msg + "</span></div>",
         unsafe_allow_html=True,
     )
 
@@ -408,6 +433,7 @@ with st.sidebar:
 # =============================================================================
 if menu == "Beranda":
 
+    # Hero
     st.markdown("""
     <div class="hero-section">
         <div class="hero-badge">AI-Powered Fraud Detection &nbsp;·&nbsp; 24/7 Autonomous</div>
@@ -428,10 +454,10 @@ if menu == "Beranda":
     st.markdown("<div class='section-wrapper'>", unsafe_allow_html=True)
     s1, s2, s3, s4 = st.columns(4)
     for col, (n, l) in zip([s1, s2, s3, s4], [
-        ("88%","Kebocoran Berhasil Dicegah"),
-        ("24/7","Monitoring Otomatis"),
+        ("88%",    "Kebocoran Berhasil Dicegah"),
+        ("24/7",   "Monitoring Otomatis"),
         ("< 5 Dtk","Deteksi Real-Time"),
-        ("5 Tier","Solusi Semua Skala"),
+        ("5 Tier", "Solusi Semua Skala"),
     ]):
         with col:
             st.markdown(
@@ -522,7 +548,12 @@ if menu == "Beranda":
             <span style='color:#7a9bbf;'>_</span>
         </div>""", unsafe_allow_html=True)
     with dm2:
-        for icon, val, lbl in [("🔍","3 Anomali","Terdeteksi malam ini"),("📲","1 Alert","Dikirim ke Owner"),("📊","100%","Audit Coverage"),("⚡","0.2ms","Response Time")]:
+        for icon, val, lbl in [
+            ("🔍","3 Anomali","Terdeteksi malam ini"),
+            ("📲","1 Alert","Dikirim ke Owner"),
+            ("📊","100%","Audit Coverage"),
+            ("⚡","0.2ms","Response Time"),
+        ]:
             st.markdown(
                 "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:8px;"
                 "padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:16px;'>"
@@ -566,7 +597,7 @@ if menu == "Beranda":
 
     # Final CTA
     st.markdown("""
-    <div style='background:linear-gradient(135deg,#0d1a2e,#0a1628);padding:48px;text-align:center;border-top:1px solid #1e3352;'>
+    <div style='background:linear-gradient(135deg,#0d1a2e,#0a1628);padding:48px;text-align:center;border-top:1px solid #1e3352;border-bottom:1px solid #1e3352;'>
         <div style='font-family:Rajdhani,sans-serif;font-size:36px;font-weight:700;color:#e8f4ff;margin-bottom:12px;'>
             Siap Menutup Kebocoran Bisnis Anda?
         </div>
@@ -581,8 +612,168 @@ if menu == "Beranda":
     with cf2:
         st.link_button("Chat Sekarang", WA_LINK_KONSUL, use_container_width=True)
 
+    # =========================================================================
+    # CHATBOT CS 24/7 — Di Bagian Paling Bawah Beranda
+    # =========================================================================
+    st.markdown("""
+    <div class='cs-section'>
+        <div class='section-header'>Sentinel CS — <span class='section-accent'>Konsultan AI 24/7</span></div>
+        <div class='section-subheader'>Tanya apa saja tentang paket, harga, ROI, atau cara pemasangan V-Guard</div>
+    </div>""", unsafe_allow_html=True)
+
+    cs_main, cs_side = st.columns([1.8, 1], gap="large")
+
+    with cs_main:
+        st.markdown(
+            "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:14px;"
+            "padding:24px;min-height:440px;'>",
+            unsafe_allow_html=True,
+        )
+
+        # Render chat history
+        for msg in st.session_state.cs_chat_history:
+            if msg["role"] == "user":
+                st.markdown(
+                    "<div style='text-align:right;margin-bottom:4px;'>"
+                    "<div class='chat-label'>Anda</div>"
+                    "<div style='display:inline-block;'>"
+                    "<div class='chat-bubble-user'>" + msg["content"] + "</div></div></div>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    "<div style='margin-bottom:4px;'>"
+                    "<div class='chat-label'>Sentinel CS — V-Guard AI</div>"
+                    "<div class='chat-bubble-ai'>" + msg["content"] + "</div></div>",
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Quick prompts
+        qp_cols = st.columns(4)
+        quick_prompts = [
+            "Paket apa yang cocok untuk warung saya?",
+            "Hitung ROI untuk omzet 50 juta",
+            "Apa itu Plug & Play?",
+            "Saya punya 3 cabang",
+        ]
+        for i, (c, qp_text) in enumerate(zip(qp_cols, quick_prompts)):
+            with c:
+                if st.button(qp_text, key="beranda_qp_" + str(i), use_container_width=True):
+                    st.session_state.cs_chat_history.append({"role": "user", "content": qp_text})
+                    if model_vguard:
+                        with st.spinner("Sentinel CS sedang menjawab..."):
+                            try:
+                                hist_api = [
+                                    {"role": m["role"], "parts": [m["content"]]}
+                                    for m in st.session_state.cs_chat_history[:-1]
+                                ]
+                                chat_obj = model_vguard.start_chat(history=hist_api)
+                                resp_obj = chat_obj.send_message(
+                                    CS_SYSTEM_PROMPT + "\n\nPertanyaan: " + qp_text
+                                )
+                                answer = resp_obj.text
+                                st.session_state.api_cost_total += 200
+                            except Exception as _err:
+                                if "429" in str(_err):
+                                    answer = "Maaf, AI sedang sibuk (kuota sementara habis). Silakan hubungi kami langsung: https://wa.me/" + WA_NUMBER
+                                else:
+                                    answer = "Maaf, terjadi gangguan koneksi AI. Silakan hubungi kami via WhatsApp: https://wa.me/" + WA_NUMBER
+                    else:
+                        answer = (
+                            "Halo! Saya Sentinel CS, asisten V-Guard AI.\n\n"
+                            "Untuk pertanyaan ini, saya rekomendasikan konsultasi langsung via WhatsApp "
+                            "agar mendapat analisis yang personal dan akurat.\n\n"
+                            "**Link konsultasi:** https://wa.me/" + WA_NUMBER
+                        )
+                    st.session_state.cs_chat_history.append({"role": "assistant", "content": answer})
+                    st.rerun()
+
+        # Chat input
+        user_msg_beranda = st.chat_input("Ketik pertanyaan Anda di sini...", key="chat_beranda")
+        if user_msg_beranda:
+            st.session_state.cs_chat_history.append({"role": "user", "content": user_msg_beranda})
+            if model_vguard:
+                with st.spinner("Sentinel CS sedang menjawab..."):
+                    try:
+                        hist_api = [
+                            {"role": m["role"], "parts": [m["content"]]}
+                            for m in st.session_state.cs_chat_history[:-1]
+                        ]
+                        chat_obj = model_vguard.start_chat(history=hist_api)
+                        resp_obj = chat_obj.send_message(
+                            CS_SYSTEM_PROMPT + "\n\nPertanyaan: " + user_msg_beranda
+                        )
+                        answer = resp_obj.text
+                        st.session_state.api_cost_total += 200
+                    except Exception as _err:
+                        if "429" in str(_err):
+                            answer = "Maaf, AI sedang sibuk (kuota sementara habis). Silakan hubungi kami: https://wa.me/" + WA_NUMBER
+                        else:
+                            answer = "Maaf, AI sedang maintenance. Hubungi kami langsung: https://wa.me/" + WA_NUMBER
+            else:
+                answer = (
+                    "Halo! Saya Sentinel CS V-Guard AI.\n\n"
+                    "Untuk membantu Anda dengan lebih baik, silakan hubungi konsultan kami via WhatsApp:\n\n"
+                    "**https://wa.me/" + WA_NUMBER + "**\n\n"
+                    "Kami siap konsultasi gratis 30 menit untuk analisis kebutuhan bisnis Anda."
+                )
+            st.session_state.cs_chat_history.append({"role": "assistant", "content": answer})
+            st.rerun()
+
+    with cs_side:
+        st.markdown(
+            "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;"
+            "padding:20px;margin-bottom:16px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;"
+            "color:#00d4ff;margin-bottom:12px;'>Sentinel CS Bisa Bantu:</div>"
+            + "".join([
+                "<div style='display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;'>"
+                "<span style='color:#00e676;font-size:11px;flex-shrink:0;margin-top:2px;'>✓</span>"
+                "<span style='font-size:12px;color:#7a9bbf;line-height:1.5;'>" + item + "</span></div>"
+                for item in [
+                    "Rekomendasi paket berdasarkan skala bisnis",
+                    "Kalkulasi ROI & estimasi penghematan (shrinkage)",
+                    "Penjelasan Plug & Play vs Instalasi Teknisi",
+                    "Perbandingan fitur antar paket",
+                    "Pertanyaan teknis & proses onboarding",
+                    "Jadwalkan demo langsung dengan Founder",
+                ]
+            ])
+            + "</div>",
+            unsafe_allow_html=True,
+        )
+
+        # Install Info
+        st.markdown(
+            "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:12px;"
+            "padding:20px;margin-bottom:16px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;"
+            "color:#e8f4ff;margin-bottom:12px;'>Panduan Instalasi</div>"
+            "<div style='background:#00e67611;border:1px solid #00e67633;border-radius:8px;"
+            "padding:10px;margin-bottom:8px;'>"
+            "<div style='font-size:11px;font-weight:700;color:#00e676;"
+            "font-family:JetBrains Mono,monospace;'>PLUG & PLAY</div>"
+            "<div style='font-size:11px;color:#7a9bbf;margin-top:4px;'>"
+            "V-LITE & V-PRO — Mandiri, tanpa teknisi, tanpa kabel ribet</div></div>"
+            "<div style='background:#ffab0011;border:1px solid #ffab0033;border-radius:8px;padding:10px;'>"
+            "<div style='font-size:11px;font-weight:700;color:#ffab00;"
+            "font-family:JetBrains Mono,monospace;'>INTEGRASI PROFESIONAL</div>"
+            "<div style='font-size:11px;color:#7a9bbf;margin-top:4px;'>"
+            "V-ADVANCE, V-ELITE, V-ULTRA — Teknisi V-Guard ke lokasi Anda</div>"
+            "</div></div>",
+            unsafe_allow_html=True,
+        )
+
+        if st.button("Reset Percakapan", key="reset_chat_beranda", use_container_width=True):
+            st.session_state.cs_chat_history = []
+            st.rerun()
+
+        st.link_button("Lanjut via WhatsApp", WA_LINK_KONSUL, use_container_width=True)
+
 # =============================================================================
-# 11. PRODUK & HARGA
+# 11. PRODUK & HARGA — 5 Kolom, Equal Height via CSS Flexbox
 # =============================================================================
 elif menu == "Produk & Harga":
 
@@ -596,114 +787,149 @@ elif menu == "Produk & Harga":
 
     PACKAGES = [
         {
-            "key":"LITE","name":"V-LITE","badge_cls":"badge-entry","badge_txt":"Entry Level",
-            "focus":"Fondasi keamanan digital untuk usaha satu kasir",
-            "price":"Rp 150.000","period":"/ bulan","setup":"Setup: Rp 250.000",
-            "popular":False,"ultra":False,"plug_play":True,
-            "features":["Deteksi VOID & Cancel","Daily AI Summary via WhatsApp",
-                        "Dashboard Web Real-Time","Laporan Kebocoran Otomatis","Support via WhatsApp"],
+            "key": "LITE", "name": "V-LITE", "badge_cls": "badge-entry", "badge_txt": "Entry Level",
+            "focus": "Fondasi keamanan digital untuk usaha satu kasir",
+            "price": "Rp 150.000", "period": "/ bulan", "setup": "Setup: Rp 250.000",
+            "popular": False, "ultra": False, "plug_play": True,
+            "features": [
+                "Deteksi VOID & Cancel",
+                "Daily AI Summary via WhatsApp",
+                "Dashboard Web Real-Time",
+                "Laporan Kebocoran Otomatis",
+                "Support via WhatsApp",
+            ],
         },
         {
-            "key":"PRO","name":"V-PRO","badge_cls":"badge-pro","badge_txt":"Pro",
-            "focus":"Otomasi admin, stok, & audit bank tanpa input manual",
-            "price":"Rp 450.000","period":"/ bulan","setup":"Setup: Rp 750.000",
-            "popular":True,"ultra":False,"plug_play":True,
-            "features":["Semua fitur V-LITE","VCS Secure Integration","Bank Statement Audit Otomatis",
-                        "Input Invoice via OCR","Laporan PDF Terjadwal","Support Prioritas 24/7"],
+            "key": "PRO", "name": "V-PRO", "badge_cls": "badge-pro", "badge_txt": "Pro",
+            "focus": "Otomasi admin, stok, & audit bank tanpa input manual",
+            "price": "Rp 450.000", "period": "/ bulan", "setup": "Setup: Rp 750.000",
+            "popular": True, "ultra": False, "plug_play": True,
+            "features": [
+                "Semua fitur V-LITE",
+                "VCS Secure Integration",
+                "Bank Statement Audit Otomatis",
+                "Input Invoice via OCR",
+                "Laporan PDF Terjadwal",
+                "Support Prioritas 24/7",
+            ],
         },
         {
-            "key":"SIGHT","name":"V-SIGHT","badge_cls":"badge-sight","badge_txt":"Pengawas Aktif",
-            "focus":"Mata AI pengawas aktif — visual, stok & multi-cabang",
-            "price":"Rp 1.200.000","period":"/ bulan","setup":"Setup: Rp 3.500.000",
-            "popular":False,"ultra":False,"plug_play":False,
-            "features":["Semua fitur V-PRO","CCTV AI — Visual Cashier Audit","WhatsApp Fraud Alarm Instan",
-                        "H-7 Auto Collection Reminder","Multi-Cabang Dashboard"],
+            "key": "ADVANCE", "name": "V-ADVANCE", "badge_cls": "badge-adv", "badge_txt": "Pengawas Aktif",
+            "focus": "Mata AI pengawas aktif — visual, stok & multi-cabang",
+            "price": "Rp 1.200.000", "period": "/ bulan", "setup": "Setup: Rp 3.500.000",
+            "popular": False, "ultra": False, "plug_play": False,
+            "features": [
+                "Semua fitur V-PRO",
+                "CCTV AI — Visual Cashier Audit",
+                "WhatsApp Fraud Alarm Instan",
+                "H-7 Auto Collection Reminder",
+                "Multi-Cabang Dashboard",
+            ],
         },
         {
-            "key":"ENT","name":"V-ENTERPRISE","badge_cls":"badge-ent","badge_txt":"Korporasi",
-            "focus":"Kedaulatan data penuh — server privat & AI forensik",
-            "price":"Mulai Rp 3.500.000","period":"/ bulan","setup":"Setup: Rp 10.000.000",
-            "popular":False,"ultra":False,"plug_play":False,
-            "features":["Semua fitur V-SIGHT","Deep Learning Forensik AI","Dedicated Private Server",
-                        "Custom AI SOP per Divisi","On-site Implementation","SLA 99.9% Uptime"],
+            "key": "ELITE", "name": "V-ELITE", "badge_cls": "badge-ent", "badge_txt": "Korporasi",
+            "focus": "Kedaulatan data penuh — server privat & AI forensik",
+            "price": "Mulai Rp 3.500.000", "period": "/ bulan", "setup": "Setup: Rp 10.000.000",
+            "popular": False, "ultra": False, "plug_play": False,
+            "features": [
+                "Semua fitur V-ADVANCE",
+                "Deep Learning Forensik AI",
+                "Dedicated Private Server",
+                "Custom AI SOP per Divisi",
+                "On-site Implementation",
+                "SLA 99.9% Uptime",
+            ],
         },
         {
-            "key":"ULTRA","name":"V-ULTRA","badge_cls":"badge-ultra","badge_txt":"Executive",
-            "focus":"White-Label & 10 Elite AI Squad aktif penuh",
-            "price":"Custom Quote","period":"Harga khusus korporasi","setup":"Konsultasi strategis gratis",
-            "popular":False,"ultra":True,"plug_play":False,
-            "features":["Seluruh ekosistem V-ENTERPRISE","White-Label Platform",
-                        "Executive BI Dashboard C-Level","10 Elite AI Squad serentak",
-                        "Dedicated AI Strategist","V-Guard Secure Liaison Protocol (ERP)"],
+            "key": "ULTRA", "name": "V-ULTRA", "badge_cls": "badge-ultra", "badge_txt": "Executive",
+            "focus": "White-Label & 10 Elite AI Squad aktif penuh",
+            "price": "Custom Quote", "period": "Harga khusus korporasi",
+            "setup": "Konsultasi strategis gratis",
+            "popular": False, "ultra": True, "plug_play": False,
+            "features": [
+                "Seluruh ekosistem V-ELITE",
+                "White-Label Platform",
+                "Executive BI Dashboard C-Level",
+                "10 Elite AI Squad serentak",
+                "Dedicated AI Strategist",
+                "V-Guard Secure Liaison Protocol (ERP)",
+            ],
         },
     ]
 
+    # Render 5 kolom dengan equal height via CSS flexbox
     st.markdown("<div style='padding:28px 40px 0;'>", unsafe_allow_html=True)
-    cols = st.columns(5, gap="small")
 
-    for col, pkg in zip(cols, PACKAGES):
-        with col:
-            # Build feature HTML
-            feat_html = ""
-            for f in pkg["features"]:
-                if pkg["ultra"]:
-                    feat_html += "<div class='pkg-feature-ultra'><span class='pkg-check-ultra'>✓</span>" + f + "</div>"
-                else:
-                    feat_html += "<div class='pkg-feature'><span class='pkg-check'>✓</span>" + f + "</div>"
-
-            # Install pill
-            if pkg["plug_play"]:
-                install_html = "<span class='install-pill install-pnp'>Plug &amp; Play</span>"
+    # Build all 5 card HTML strings
+    cards_html = ""
+    for pkg in PACKAGES:
+        feat_html = ""
+        for f in pkg["features"]:
+            if pkg["ultra"]:
+                feat_html += "<div class='pkg-feature-ultra'><span class='pkg-check-ultra'>✓</span>" + f + "</div>"
             else:
-                install_html = "<span class='install-pill install-pro'>Teknisi Profesional</span>"
+                feat_html += "<div class='pkg-feature'><span class='pkg-check'>✓</span>" + f + "</div>"
 
-            # Label & card class
-            if pkg["popular"]:
-                label_html = "<div class='hot-label'>TERLARIS</div>"
-                card_cls   = "pkg-card-popular"
-            elif pkg["ultra"]:
-                label_html = "<div class='ultra-label'>EKSKLUSIF</div>"
-                card_cls   = "pkg-card-ultra"
-            else:
-                label_html = ""
-                card_cls   = "pkg-card"
+        if pkg["plug_play"]:
+            install_html = "<span class='install-pill install-pnp'>Plug &amp; Play</span>"
+        else:
+            install_html = "<span class='install-pill install-pro'>Teknisi Profesional</span>"
 
-            name_cls  = "pkg-name-ultra" if pkg["ultra"] else "pkg-name"
-            price_cls = "pkg-price-ultra" if pkg["ultra"] else "pkg-price"
+        if pkg["popular"]:
+            label_html = "<div class='hot-label'>TERLARIS</div>"
+            card_cls   = "pkg-card-popular"
+        elif pkg["ultra"]:
+            label_html = "<div class='ultra-label'>EKSKLUSIF</div>"
+            card_cls   = "pkg-card-ultra"
+        else:
+            label_html = ""
+            card_cls   = "pkg-card"
 
-            html = (
-                "<div class='" + card_cls + "'>"
-                + label_html
-                + "<span class='tier-badge " + pkg["badge_cls"] + "'>" + pkg["badge_txt"] + "</span>"
-                + "<div class='" + name_cls + "'>" + pkg["name"] + "</div>"
-                + "<div class='pkg-focus'>" + pkg["focus"] + "</div>"
-                + "<hr class='pkg-divider'>"
-                + "<div class='" + price_cls + "'>" + pkg["price"] + "</div>"
-                + "<div class='pkg-period'>" + pkg["period"] + "</div>"
-                + "<div class='pkg-setup'>" + pkg["setup"] + "</div>"
-                + install_html
-                + "<hr class='pkg-divider'>"
-                + feat_html
-                + "</div>"
-            )
-            st.markdown(html, unsafe_allow_html=True)
+        name_cls  = "pkg-name-ultra" if pkg["ultra"] else "pkg-name"
+        price_cls = "pkg-price-ultra" if pkg["ultra"] else "pkg-price"
 
+        card_html = (
+            "<div style='flex:1;min-width:0;padding-top:16px;'>"
+            "<div class='" + card_cls + "' style='height:100%;'>"
+            + label_html
+            + "<span class='tier-badge " + pkg["badge_cls"] + "'>" + pkg["badge_txt"] + "</span>"
+            + "<div class='" + name_cls + "'>" + pkg["name"] + "</div>"
+            + "<div class='pkg-focus'>" + pkg["focus"] + "</div>"
+            + "<hr class='pkg-divider'>"
+            + "<div class='" + price_cls + "'>" + pkg["price"] + "</div>"
+            + "<div class='pkg-period'>" + pkg["period"] + "</div>"
+            + "<div class='pkg-setup'>" + pkg["setup"] + "</div>"
+            + install_html
+            + "<hr class='pkg-divider'>"
+            + "<div class='pkg-features-grow'>" + feat_html + "</div>"
+            + "</div></div>"
+        )
+        cards_html += card_html
+
+    st.markdown(
+        "<div style='display:flex;flex-direction:row;gap:12px;align-items:stretch;"
+        "width:100%;margin-bottom:24px;'>"
+        + cards_html
+        + "</div>",
+        unsafe_allow_html=True,
+    )
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Install legend
     st.markdown(
-        "<div style='padding:16px 48px;'>"
-        "<div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:14px 20px;"
-        "font-size:12px;color:#7a9bbf;line-height:1.8;'>"
-        "<b style='color:#00e676;'>Plug &amp; Play (V-LITE &amp; V-PRO):</b> Setup mandiri, tanpa teknisi, tanpa ribet kabel — langsung aktif dalam hitungan menit.&nbsp;&nbsp;"
-        "<b style='color:#ffab00;'>Teknisi Profesional (V-SIGHT, V-ENTERPRISE, V-ULTRA):</b> Memerlukan integrasi khusus oleh teknisi V-Guard di lokasi bisnis Anda."
+        "<div style='padding:0 48px 16px;'>"
+        "<div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;"
+        "padding:14px 20px;font-size:12px;color:#7a9bbf;line-height:1.8;'>"
+        "<b style='color:#00e676;'>Plug &amp; Play (V-LITE &amp; V-PRO):</b> "
+        "Setup mandiri, tanpa teknisi, tanpa ribet kabel — langsung aktif dalam hitungan menit.&nbsp;&nbsp;"
+        "<b style='color:#ffab00;'>Teknisi Profesional (V-ADVANCE, V-ELITE, V-ULTRA):</b> "
+        "Memerlukan integrasi khusus oleh teknisi V-Guard di lokasi bisnis Anda."
         "</div></div>",
         unsafe_allow_html=True,
     )
 
-    # CTA
     st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
-    _, ctm, _ = st.columns([1.5,1,1.5])
+    _, ctm, _ = st.columns([1.5, 1, 1.5])
     with ctm:
         st.link_button("Order via WhatsApp", WA_LINK_KONSUL, use_container_width=True)
 
@@ -723,8 +949,15 @@ elif menu == "Kalkulator ROI":
     roi_l, roi_r = st.columns([1, 1.2], gap="large")
 
     with roi_l:
-        st.markdown("<div style='background:#101c2e;border:1px solid #1e3352;border-radius:14px;padding:28px;'>", unsafe_allow_html=True)
-        st.markdown("<p style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#e8f4ff;margin-bottom:20px;'>Data Bisnis Anda</p>", unsafe_allow_html=True)
+        st.markdown(
+            "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:14px;padding:28px;'>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "<p style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+            "color:#e8f4ff;margin-bottom:20px;'>Data Bisnis Anda</p>",
+            unsafe_allow_html=True,
+        )
         omzet  = st.number_input("Omzet Bulanan (Rp)", value=100_000_000, step=5_000_000, format="%d")
         jenis  = st.selectbox("Jenis Bisnis", ["Kafe / Resto","Retail / Minimarket","Gudang / Distributor","Korporasi Multi-Cabang"])
         cabang = st.number_input("Jumlah Kasir / Cabang", value=1, min_value=1, max_value=100)
@@ -732,16 +965,16 @@ elif menu == "Kalkulator ROI":
         paket_rec = st.selectbox("Paket yang Diminati", [
             "V-LITE (Rp 150rb/bln)",
             "V-PRO (Rp 450rb/bln)",
-            "V-SIGHT (Rp 1,2Jt/bln)",
-            "V-ENTERPRISE (Mulai Rp 3,5Jt/bln)",
+            "V-ADVANCE (Rp 1,2Jt/bln)",
+            "V-ELITE (Mulai Rp 3,5Jt/bln)",
             "V-ULTRA (Custom)",
         ])
         biaya_map = {
-            "V-LITE (Rp 150rb/bln)": 150_000,
-            "V-PRO (Rp 450rb/bln)": 450_000,
-            "V-SIGHT (Rp 1,2Jt/bln)": 1_200_000,
-            "V-ENTERPRISE (Mulai Rp 3,5Jt/bln)": 3_500_000,
-            "V-ULTRA (Custom)": 0,
+            "V-LITE (Rp 150rb/bln)":          150_000,
+            "V-PRO (Rp 450rb/bln)":            450_000,
+            "V-ADVANCE (Rp 1,2Jt/bln)":      1_200_000,
+            "V-ELITE (Mulai Rp 3,5Jt/bln)":  3_500_000,
+            "V-ULTRA (Custom)":                        0,
         }
         biaya_vguard = biaya_map[paket_rec]
         st.markdown("</div>", unsafe_allow_html=True)
@@ -759,15 +992,17 @@ elif menu == "Kalkulator ROI":
             "<div style='background:#0d1a2e;border:1px solid #ff3b5c55;border-left:3px solid #ff3b5c;"
             "border-radius:14px;padding:24px;margin-bottom:16px;'>"
             "<div style='font-size:13px;color:#7a9bbf;'>Estimasi Kebocoran per Bulan</div>"
-            "<div style='font-family:Rajdhani,sans-serif;font-size:42px;font-weight:700;color:#ff3b5c;'>Rp " + f"{loss_m:,.0f}" + "</div>"
-            "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>Per tahun: <b style='color:#ff3b5c;'>Rp " + f"{loss_y:,.0f}" + "</b></div>"
-            "</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:42px;font-weight:700;color:#ff3b5c;'>"
+            "Rp " + f"{loss_m:,.0f}" + "</div>"
+            "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>Per tahun: "
+            "<b style='color:#ff3b5c;'>Rp " + f"{loss_y:,.0f}" + "</b></div></div>"
             "<div style='background:#0d1a2e;border:1px solid #00e67655;border-left:3px solid #00e676;"
             "border-radius:14px;padding:24px;margin-bottom:16px;'>"
             "<div style='font-size:13px;color:#7a9bbf;'>Estimasi Penyelamatan dengan V-Guard (88%)</div>"
-            "<div style='font-family:Rajdhani,sans-serif;font-size:42px;font-weight:700;color:#00e676;'>Rp " + f"{save_m:,.0f}" + "</div>"
-            "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>Per tahun: <b style='color:#00e676;'>Rp " + f"{save_y:,.0f}" + "</b></div>"
-            "</div>",
+            "<div style='font-family:Rajdhani,sans-serif;font-size:42px;font-weight:700;color:#00e676;'>"
+            "Rp " + f"{save_m:,.0f}" + "</div>"
+            "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>Per tahun: "
+            "<b style='color:#00e676;'>Rp " + f"{save_y:,.0f}" + "</b></div></div>",
             unsafe_allow_html=True,
         )
 
@@ -775,20 +1010,29 @@ elif menu == "Kalkulator ROI":
         with r1:
             st.markdown(
                 "<div class='stat-card' style='padding:18px;'>"
-                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>Rp " + f"{net_roi:,.0f}" + "</div>"
-                "<div class='stat-label'>Net ROI / Bulan</div></div>", unsafe_allow_html=True)
+                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>"
+                "Rp " + f"{net_roi:,.0f}" + "</div>"
+                "<div class='stat-label'>Net ROI / Bulan</div></div>",
+                unsafe_allow_html=True,
+            )
         with r2:
             roi_disp = "Tak Terhingga" if roi_pct == 0 else f"{roi_pct:.0f}%"
             st.markdown(
                 "<div class='stat-card' style='padding:18px;'>"
-                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>" + roi_disp + "</div>"
-                "<div class='stat-label'>Return on Investment</div></div>", unsafe_allow_html=True)
+                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>"
+                + roi_disp + "</div>"
+                "<div class='stat-label'>Return on Investment</div></div>",
+                unsafe_allow_html=True,
+            )
         with r3:
             pb_disp = "—" if payback == 0 else f"{payback:.0f} Hari"
             st.markdown(
                 "<div class='stat-card' style='padding:18px;'>"
-                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>" + pb_disp + "</div>"
-                "<div class='stat-label'>Balik Modal</div></div>", unsafe_allow_html=True)
+                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>"
+                + pb_disp + "</div>"
+                "<div class='stat-label'>Balik Modal</div></div>",
+                unsafe_allow_html=True,
+            )
 
         st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
         wa_roi = urllib.parse.quote(
@@ -801,6 +1045,7 @@ elif menu == "Kalkulator ROI":
             "https://wa.me/" + WA_NUMBER + "?text=" + wa_roi,
             use_container_width=True,
         )
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================================================================
@@ -814,18 +1059,12 @@ elif menu == "Portal Klien":
         unsafe_allow_html=True,
     )
 
-    # ── Affiliate Banner ──────────────────────────────────────────────────────
-    st.markdown("""
-    <div class='affiliate-banner'>
-        <div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#00e676;margin-bottom:6px;'>
-            PROGRAM KEMITRAAN V-GUARD — KOMISI 10%
-        </div>
-        <div style='font-size:13px;color:#7a9bbf;line-height:1.7;'>
-            Dapatkan <b style='color:#00e676;'>Komisi 10% dari Omset Bersih</b> untuk setiap klien yang 
-            bergabung melalui link referal Anda. Bagikan link Anda, kami yang handle sisanya.
-            Komisi dibayarkan setiap bulan selama klien aktif berlangganan.
-        </div>
-    </div>""", unsafe_allow_html=True)
+    # Affiliate Banner dengan st.success
+    st.success(
+        "🤝 PROGRAM KEMITRAAN V-GUARD — Komisi 10% Omset Bersih untuk setiap klien yang bergabung "
+        "melalui link referral Anda. Komisi dibayar setiap bulan selama klien aktif berlangganan. "
+        "Cek tab 'Program Afiliasi' di bawah untuk link referral unik Anda."
+    )
 
     tab_log, tab_reg, tab_aff = st.tabs(["Login Dashboard", "Daftar / Order Baru", "Program Afiliasi"])
 
@@ -835,8 +1074,10 @@ elif menu == "Portal Klien":
             "<div class='login-card'>"
             "<div style='text-align:center;margin-bottom:24px;'>"
             "<div style='font-size:40px;'>🛡️</div>"
-            "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#e8f4ff;'>Masuk ke Sentinel Dashboard</div>"
-            "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>Masukkan kredensial yang dikirim saat aktivasi</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#e8f4ff;'>"
+            "Masuk ke Sentinel Dashboard</div>"
+            "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>"
+            "Masukkan kredensial yang dikirim saat aktivasi</div>"
             "</div></div>",
             unsafe_allow_html=True,
         )
@@ -862,11 +1103,16 @@ elif menu == "Portal Klien":
 
         with reg_l:
             with st.form("form_pendaftaran"):
-                st.markdown("<p style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#e8f4ff;'>Form Pendaftaran Klien</p>", unsafe_allow_html=True)
+                st.markdown(
+                    "<p style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+                    "color:#e8f4ff;'>Form Pendaftaran Klien</p>",
+                    unsafe_allow_html=True,
+                )
                 nama_klien = st.text_input("Nama Lengkap / Owner *")
                 nama_usaha = st.text_input("Nama Usaha *")
+                email_klien = st.text_input("Alamat Email *", placeholder="contoh@email.com")
                 no_hp      = st.text_input("Nomor WhatsApp *", placeholder="Contoh: 62812xxxx")
-                produk     = st.selectbox("Pilih Paket *", ["V-LITE","V-PRO","V-SIGHT","V-ENTERPRISE","V-ULTRA"])
+                produk     = st.selectbox("Pilih Paket *", ["V-LITE","V-PRO","V-ADVANCE","V-ELITE","V-ULTRA"])
 
                 with st.expander("Syarat & Ketentuan"):
                     st.markdown("""
@@ -880,19 +1126,20 @@ elif menu == "Portal Klien":
                 submit = st.form_submit_button("Daftar & Dapatkan Akses AI", type="primary", use_container_width=True)
 
                 if submit:
-                    if setuju and nama_klien and no_hp and nama_usaha:
+                    if setuju and nama_klien and no_hp and nama_usaha and email_klien:
                         new_cid = buat_client_id(nama_klien, no_hp)
                         st.session_state.db_umum.append({
-                            "Nama Klien": nama_klien,
-                            "Nama Usaha": nama_usaha,
-                            "Produk":     produk,
-                            "Status":     "Menunggu Pembayaran",
-                            "WhatsApp":   no_hp,
+                            "Nama Klien":    nama_klien,
+                            "Nama Usaha":    nama_usaha,
+                            "Email":         email_klien,
+                            "Produk":        produk,
+                            "Status":        "Menunggu Pembayaran",
+                            "WhatsApp":      no_hp,
                             "Nilai Kontrak": "0",
-                            "Client_ID":  new_cid,
-                            "Source":     st.session_state.get("tracking_source", "organic"),
-                            "Ref":        st.session_state.get("tracking_ref", ""),
-                            "Timestamp":  datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                            "Client_ID":     new_cid,
+                            "Source":        st.session_state.get("tracking_source", "organic"),
+                            "Ref":           st.session_state.get("tracking_ref", ""),
+                            "Timestamp":     datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
                         })
                         st.success("Pendaftaran berhasil! Invoice dikirim ke WhatsApp **" + no_hp + "** dalam 1x24 jam.")
                         st.info("Client ID Anda: **" + new_cid + "**")
@@ -902,9 +1149,13 @@ elif menu == "Portal Klien":
 
         with reg_r:
             st.markdown(
-                "<div style='margin-top:44px;background:#101c2e;border:1px solid #1e3352;border-radius:14px;padding:24px;'>"
-                "<div style='font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:#e8f4ff;margin-bottom:16px;'>Setelah Mendaftar:</div>"
-                "</div>",
+                "<div style='margin-top:44px;background:#101c2e;border:1px solid #1e3352;"
+                "border-radius:14px;padding:24px;'>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                "<div style='font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;"
+                "color:#e8f4ff;margin-bottom:16px;'>Setelah Mendaftar:</div>",
                 unsafe_allow_html=True,
             )
             for icon, step in [
@@ -922,15 +1173,16 @@ elif menu == "Portal Klien":
                     "<span style='font-size:13px;color:#7a9bbf;line-height:1.5;'>" + step + "</span></div>",
                     unsafe_allow_html=True,
                 )
+            st.markdown("</div>", unsafe_allow_html=True)
             st.link_button("Tanya via WhatsApp", WA_LINK_KONSUL, use_container_width=True)
 
     with tab_aff:
         st.markdown("<div style='margin-top:24px;'>", unsafe_allow_html=True)
         st.markdown(
-            "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#e8f4ff;margin-bottom:4px;'>"
-            "Dashboard Afiliasi & Referal</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;"
+            "color:#e8f4ff;margin-bottom:4px;'>Dashboard Afiliasi & Referral</div>"
             "<div style='font-size:13px;color:#7a9bbf;margin-bottom:24px;'>"
-            "Masukkan Client ID Anda untuk melihat link referal dan statistik komisi.</div>",
+            "Masukkan Client ID Anda untuk melihat link referral unik dan statistik komisi.</div>",
             unsafe_allow_html=True,
         )
 
@@ -939,13 +1191,15 @@ elif menu == "Portal Klien":
         if aff_id:
             ref_link = buat_referral_link(aff_id)
             st.markdown(
-                "<div style='background:#101c2e;border:1px solid #00e67644;border-radius:12px;padding:24px;margin-bottom:16px;'>"
-                "<div style='font-size:12px;color:#7a9bbf;margin-bottom:8px;font-family:JetBrains Mono,monospace;"
-                "text-transform:uppercase;letter-spacing:1px;'>Link Referal Unik Anda</div>"
+                "<div style='background:#101c2e;border:1px solid #00e67644;border-radius:12px;"
+                "padding:24px;margin-bottom:16px;'>"
+                "<div style='font-size:12px;color:#7a9bbf;margin-bottom:8px;"
+                "font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:1px;'>"
+                "Link Referral Unik Anda</div>"
                 "<div class='ref-link-box'>" + ref_link + "</div>"
                 "<div style='font-size:12px;color:#7a9bbf;margin-top:10px;'>"
                 "Setiap klien yang mendaftar via link ini akan tercatat atas nama Anda. "
-                "Komisi 10% dibayarkan bulanan selama klien aktif.</div>"
+                "Komisi 10% Omset Bersih dibayarkan bulanan selama klien aktif.</div>"
                 "</div>",
                 unsafe_allow_html=True,
             )
@@ -953,7 +1207,7 @@ elif menu == "Portal Klien":
             wa_aff_msg = urllib.parse.quote(
                 "Halo Pak Erwin, saya ingin bergabung sebagai Mitra Afiliasi V-Guard AI.\n"
                 "Client ID saya: " + aff_id + "\n"
-                "Mohon info lebih lanjut tentang program komisi 10%."
+                "Mohon info lebih lanjut tentang program komisi 10% Omset Bersih."
             )
             st.link_button(
                 "Daftar Program Mitra via WhatsApp",
@@ -962,178 +1216,32 @@ elif menu == "Portal Klien":
             )
 
             a1, a2, a3 = st.columns(3)
-            a1.metric("Komisi per Klien V-PRO", "Rp 45.000 / bln")
-            a2.metric("Komisi per Klien V-SIGHT", "Rp 120.000 / bln")
-            a3.metric("Komisi per Klien V-ENT", "Rp 350.000 / bln")
+            a1.metric("Komisi per Klien V-PRO",     "Rp 45.000 / bln")
+            a2.metric("Komisi per Klien V-ADVANCE",  "Rp 120.000 / bln")
+            a3.metric("Komisi per Klien V-ELITE",    "Rp 350.000 / bln")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================================================================
-# 14. CUSTOMER SERVICE AI
-# =============================================================================
-elif menu == "Customer Service AI":
-    st.markdown("<div style='padding:40px 48px;'>", unsafe_allow_html=True)
-    st.markdown(
-        "<div class='page-title'>Sentinel CS — <span style='color:#00d4ff;'>AI Konsultan 24/7</span></div>"
-        "<div class='page-subtitle'>Tanya apa saja tentang V-Guard AI — paket, harga, ROI, atau cara pemasangan</div>",
-        unsafe_allow_html=True,
-    )
-
-    cs_col, cs_info = st.columns([1.8, 1], gap="large")
-
-    with cs_col:
-        st.markdown(
-            "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:14px;"
-            "padding:24px;min-height:480px;'>",
-            unsafe_allow_html=True,
-        )
-
-        # Render chat history
-        for msg in st.session_state.cs_chat_history:
-            if msg["role"] == "user":
-                st.markdown(
-                    "<div style='text-align:right;margin-bottom:4px;'>"
-                    "<div class='chat-label'>Anda</div>"
-                    "<div style='display:inline-block;'><div class='chat-bubble-user'>" + msg["content"] + "</div></div>"
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    "<div style='margin-bottom:4px;'>"
-                    "<div class='chat-label'>Sentinel CS — V-Guard AI</div>"
-                    "<div class='chat-bubble-ai'>" + msg["content"] + "</div>"
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # Quick prompts
-        st.markdown("<div style='margin:12px 0 8px;'>", unsafe_allow_html=True)
-        qp_col = st.columns(4)
-        quick_prompts = [
-            "Paket apa yang cocok untuk warung saya?",
-            "Hitung ROI untuk omzet 50 juta",
-            "Apa itu Plug & Play?",
-            "Saya punya 3 cabang",
-        ]
-        for i, (c, qp) in enumerate(zip(qp_col, quick_prompts)):
-            with c:
-                if st.button(qp, key="qp_" + str(i), use_container_width=True):
-                    st.session_state.cs_chat_history.append({"role": "user", "content": qp})
-                    if model_vguard:
-                        with st.spinner("Sentinel CS sedang menjawab..."):
-                            try:
-                                msgs_for_api = [{"role": m["role"], "parts": [m["content"]]}
-                                                for m in st.session_state.cs_chat_history]
-                                chat   = model_vguard.start_chat(history=msgs_for_api[:-1])
-                                resp   = chat.send_message(CS_SYSTEM_PROMPT + "\n\nPertanyaan: " + qp)
-                                answer = resp.text
-                                st.session_state.api_cost_total += 200
-                            except Exception as e:
-                                answer = "Maaf, terjadi gangguan koneksi AI sementara. Silakan hubungi kami langsung via WhatsApp."
-                    else:
-                        answer = (
-                            "Halo! Saya Sentinel CS, asisten V-Guard AI.\n\n"
-                            "Untuk pertanyaan: **" + qp + "**\n\n"
-                            "Saya rekomendasikan Anda menghubungi konsultan kami langsung melalui WhatsApp "
-                            "untuk mendapatkan analisis yang lebih personal dan akurat.\n\n"
-                            "**Link konsultasi:** https://wa.me/" + WA_NUMBER
-                        )
-                    st.session_state.cs_chat_history.append({"role": "assistant", "content": answer})
-                    st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # Chat input
-        user_msg = st.chat_input("Ketik pertanyaan Anda di sini...")
-        if user_msg:
-            st.session_state.cs_chat_history.append({"role": "user", "content": user_msg})
-            if model_vguard:
-                with st.spinner("Sentinel CS sedang menjawab..."):
-                    try:
-                        history_for_api = [{"role": m["role"], "parts": [m["content"]]}
-                                           for m in st.session_state.cs_chat_history[:-1]]
-                        chat   = model_vguard.start_chat(history=history_for_api)
-                        resp   = chat.send_message(CS_SYSTEM_PROMPT + "\n\nPertanyaan: " + user_msg)
-                        answer = resp.text
-                        st.session_state.api_cost_total += 200
-                    except Exception as e:
-                        answer = "Maaf, AI sedang dalam maintenance. Hubungi kami langsung: https://wa.me/" + WA_NUMBER
-            else:
-                answer = (
-                    "Halo! Saya Sentinel CS V-Guard AI.\n\n"
-                    "Untuk membantu Anda dengan lebih baik, silakan hubungi konsultan kami via WhatsApp:\n\n"
-                    "**https://wa.me/" + WA_NUMBER + "**\n\n"
-                    "Kami siap konsultasi gratis 30 menit untuk analisis kebutuhan bisnis Anda."
-                )
-            st.session_state.cs_chat_history.append({"role": "assistant", "content": answer})
-            st.rerun()
-
-    with cs_info:
-        st.markdown(
-            "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:20px;margin-bottom:16px;'>"
-            "<div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#00d4ff;margin-bottom:12px;'>"
-            "Sentinel CS Bisa Bantu:</div>"
-            + "".join([
-                "<div style='display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;'>"
-                "<span style='color:#00e676;font-size:11px;flex-shrink:0;margin-top:2px;'>✓</span>"
-                "<span style='font-size:12px;color:#7a9bbf;line-height:1.5;'>" + item + "</span></div>"
-                for item in [
-                    "Rekomendasi paket berdasarkan skala bisnis",
-                    "Kalkulasi ROI & estimasi penghematan",
-                    "Penjelasan Plug & Play vs Instalasi Teknisi",
-                    "Perbandingan fitur antar paket",
-                    "Pertanyaan teknis & proses onboarding",
-                    "Jadwalkan demo langsung dengan Founder",
-                ]
-            ])
-            + "</div>",
-            unsafe_allow_html=True,
-        )
-
-        # Install Info Card
-        st.markdown(
-            "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:12px;padding:20px;margin-bottom:16px;'>"
-            "<div style='font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#e8f4ff;margin-bottom:12px;'>Panduan Instalasi</div>"
-            "<div style='background:#00e67611;border:1px solid #00e67633;border-radius:8px;padding:10px;margin-bottom:8px;'>"
-            "<div style='font-size:11px;font-weight:700;color:#00e676;font-family:JetBrains Mono,monospace;'>PLUG & PLAY</div>"
-            "<div style='font-size:11px;color:#7a9bbf;margin-top:4px;'>V-LITE & V-PRO — Mandiri, tanpa teknisi, tanpa kabel ribet</div>"
-            "</div>"
-            "<div style='background:#ffab0011;border:1px solid #ffab0033;border-radius:8px;padding:10px;'>"
-            "<div style='font-size:11px;font-weight:700;color:#ffab00;font-family:JetBrains Mono,monospace;'>INTEGRASI PROFESIONAL</div>"
-            "<div style='font-size:11px;color:#7a9bbf;margin-top:4px;'>V-SIGHT, V-ENTERPRISE, V-ULTRA — Teknisi V-Guard ke lokasi Anda</div>"
-            "</div></div>",
-            unsafe_allow_html=True,
-        )
-
-        if st.button("Reset Percakapan", key="reset_chat", use_container_width=True):
-            st.session_state.cs_chat_history = []
-            st.rerun()
-
-        st.link_button("Lanjut via WhatsApp", WA_LINK_KONSUL, use_container_width=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# =============================================================================
-# 15. ADMIN ACCESS — THE WAR ROOM
+# 14. ADMIN ACCESS — THE WAR ROOM
 # =============================================================================
 elif menu == "Admin Access":
 
     st.markdown("<div style='padding:32px 48px;'>", unsafe_allow_html=True)
 
     if not st.session_state.admin_logged_in:
-        # ── Login Form ──
         _, lc, _ = st.columns([1, 1, 1])
         with lc:
             st.markdown(
                 "<div class='login-card'>"
                 "<div style='text-align:center;margin-bottom:24px;'>"
                 "<div style='font-size:40px;'>🔒</div>"
-                "<div style='font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;color:#e8f4ff;'>Admin Access</div>"
-                "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>Restricted — Authorized Personnel Only</div>"
+                "<div style='font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;color:#e8f4ff;'>"
+                "Admin Access</div>"
+                "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>"
+                "Restricted — Authorized Personnel Only</div>"
                 "</div></div>",
                 unsafe_allow_html=True,
             )
@@ -1148,8 +1256,18 @@ elif menu == "Admin Access":
     else:
         # ── THE WAR ROOM ──
         st.markdown(
-            "<div class='page-title'>The War Room — <span style='color:#00d4ff;'>Admin Control Center</span></div>"
+            "<div class='page-title'>The War Room — "
+            "<span style='color:#00d4ff;'>Admin Control Center</span></div>"
             "<div class='page-subtitle'>V-GUARD AI Ecosystem ©2026 — Founder Edition</div>",
+            unsafe_allow_html=True,
+        )
+
+        # AI Engine Status — Dipindahkan ke Admin
+        st.markdown(
+            "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:10px;"
+            "padding:14px 20px;margin-bottom:20px;display:inline-block;'>"
+            "<span style='font-size:14px;color:#7a9bbf;font-family:JetBrains Mono,monospace;'>"
+            + ai_status_msg + "</span></div>",
             unsafe_allow_html=True,
         )
 
@@ -1164,12 +1282,13 @@ elif menu == "Admin Access":
             "Aktivasi Klien",
             "Fraud Scanner",
             "Database Klien",
+            "Investor Dashboard",
         ])
 
         # ── Tab 1: Dashboard Utama ──────────────────────────────────────────
         with war_tabs[0]:
-            total_k  = len(st.session_state.db_umum)
-            aktif_k  = sum(1 for k in st.session_state.db_umum if k.get("Status") == "Aktif")
+            total_k   = len(st.session_state.db_umum)
+            aktif_k   = sum(1 for k in st.session_state.db_umum if k.get("Status") == "Aktif")
             pending_k = total_k - aktif_k
 
             m1, m2, m3, m4, m5 = st.columns(5)
@@ -1178,7 +1297,7 @@ elif menu == "Admin Access":
                 (str(aktif_k),   "Klien Aktif"),
                 (str(pending_k), "Menunggu Pembayaran"),
                 ("99.8%",        "System Uptime"),
-                (ai_status_msg,  "AI Engine"),
+                (ai_status,      "AI Status"),
             ]):
                 col.metric(lbl, val)
 
@@ -1188,8 +1307,8 @@ elif menu == "Admin Access":
             src_counts = get_source_counts()
             total_src  = sum(src_counts.values()) or 1
             st.markdown(
-                "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#e8f4ff;margin-bottom:12px;'>"
-                "Distribusi Sumber Trafik Pendaftar</div>",
+                "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+                "color:#e8f4ff;margin-bottom:12px;'>Distribusi Sumber Trafik Pendaftar</div>",
                 unsafe_allow_html=True,
             )
             src_cols = st.columns(len(SOURCE_MAP))
@@ -1201,8 +1320,8 @@ elif menu == "Admin Access":
         # ── Tab 2: Agent Squad ──────────────────────────────────────────────
         with war_tabs[1]:
             st.markdown(
-                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#e8f4ff;margin-bottom:16px;'>"
-                "10 Elite AI Squad — Status Real-Time</div>",
+                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;"
+                "color:#e8f4ff;margin-bottom:16px;'>10 Elite AI Squad — Status Real-Time</div>",
                 unsafe_allow_html=True,
             )
 
@@ -1231,18 +1350,19 @@ elif menu == "Admin Access":
                         "<div class='war-title'>" + name + "</div>"
                         "<div style='font-size:12px;color:#7a9bbf;'>" + role + "</div>"
                         "</div>"
-                        "<span style='background:" + status_color + "18;color:" + status_color + ";border:1px solid " + status_color + "44;"
-                        "border-radius:20px;font-size:10px;padding:3px 10px;font-family:JetBrains Mono,monospace;'>"
+                        "<span style='background:" + status_color + "18;color:" + status_color + ";"
+                        "border:1px solid " + status_color + "44;border-radius:20px;font-size:10px;"
+                        "padding:3px 10px;font-family:JetBrains Mono,monospace;'>"
                         + status_txt + "</span></div></div>",
                         unsafe_allow_html=True,
                     )
 
             st.divider()
 
-            # Per-client kill switches
+            # Kill-Switch per Klien
             st.markdown(
-                "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#e8f4ff;margin-bottom:12px;'>"
-                "Kill-Switch — Kontrol AI Agent per Klien</div>",
+                "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+                "color:#e8f4ff;margin-bottom:12px;'>Kill-Switch — Kontrol AI Agent per Klien</div>",
                 unsafe_allow_html=True,
             )
 
@@ -1257,10 +1377,11 @@ elif menu == "Admin Access":
                     cur_state = st.session_state.agent_kill_switch[cid]
                     with ks_cols[i % 3]:
                         st.markdown(
-                            "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:8px;padding:12px;margin-bottom:10px;'>"
+                            "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:8px;"
+                            "padding:12px;margin-bottom:10px;'>"
                             "<div style='font-size:13px;color:#e8f4ff;font-weight:600;'>" + klien["Nama Klien"] + "</div>"
-                            "<div style='font-size:10px;color:#4a6a8a;font-family:JetBrains Mono,monospace;margin-bottom:8px;'>" + cid + " · " + klien["Produk"] + "</div>"
-                            "</div>",
+                            "<div style='font-size:10px;color:#4a6a8a;font-family:JetBrains Mono,monospace;"
+                            "margin-bottom:8px;'>" + cid + " · " + klien["Produk"] + "</div></div>",
                             unsafe_allow_html=True,
                         )
                         btn_label = "AI ON — Klik untuk Matikan" if cur_state else "AI OFF — Klik untuk Nyalakan"
@@ -1271,14 +1392,14 @@ elif menu == "Admin Access":
         # ── Tab 3: Social Media AI ──────────────────────────────────────────
         with war_tabs[2]:
             st.markdown(
-                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#e8f4ff;margin-bottom:4px;'>"
-                "Status AI Omnichannel — Social Media</div>"
+                "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;"
+                "color:#e8f4ff;margin-bottom:4px;'>Status AI Omnichannel — Social Media</div>"
                 "<div style='font-size:13px;color:#7a9bbf;margin-bottom:20px;'>"
                 "Monitoring aktivitas otomatisasi konten & sinkronisasi lead dari setiap platform</div>",
                 unsafe_allow_html=True,
             )
 
-            sc = st.session_state.social_status
+            sc         = st.session_state.social_status
             plat_names = {
                 "linkedin":  "LinkedIn",
                 "facebook":  "Facebook",
@@ -1303,20 +1424,19 @@ elif menu == "Admin Access":
                         + status_badge
                         + "<div style='margin-top:12px;'>"
                         "<div style='font-size:11px;color:#7a9bbf;'>Post Hari Ini</div>"
-                        "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>" + str(pdata["posts_today"]) + "</div>"
-                        "</div>"
+                        "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;"
+                        "color:#00d4ff;'>" + str(pdata["posts_today"]) + "</div></div>"
                         "<div style='margin-top:8px;'>"
                         "<div style='font-size:11px;color:#7a9bbf;'>Post Terakhir</div>"
-                        "<div style='font-size:13px;color:#e8f4ff;'>" + pdata["last_post"] + "</div>"
-                        "</div>"
+                        "<div style='font-size:13px;color:#e8f4ff;'>" + pdata["last_post"] + "</div></div>"
                         "<div style='margin-top:8px;'>"
                         "<div style='font-size:11px;color:#7a9bbf;'>Leads Masuk</div>"
-                        "<div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#00e676;'>" + str(pdata["leads"]) + "</div>"
-                        "</div>"
+                        "<div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;"
+                        "color:#00e676;'>" + str(pdata["leads"]) + "</div></div>"
                         "<div style='margin-top:8px;'>"
                         "<div style='font-size:11px;color:#7a9bbf;'>Pendaftar via Platform</div>"
-                        "<div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#ffab00;'>" + str(src_count) + "</div>"
-                        "</div></div>",
+                        "<div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;"
+                        "color:#ffab00;'>" + str(src_count) + "</div></div></div>",
                         unsafe_allow_html=True,
                     )
                     new_state = st.toggle(
@@ -1332,8 +1452,8 @@ elif menu == "Admin Access":
 
             # Content Research Log
             st.markdown(
-                "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#e8f4ff;margin-bottom:12px;'>"
-                "Log Riset Konten Otomatis — The Growth Hacker AI</div>",
+                "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+                "color:#e8f4ff;margin-bottom:12px;'>Log Riset Konten Otomatis — The Growth Hacker AI</div>",
                 unsafe_allow_html=True,
             )
             log_entries = [
@@ -1344,20 +1464,28 @@ elif menu == "Admin Access":
                 ("11:30", "TikTok",    "Tren audit: #kasircurang #bisnisbocor — hook video 15 detik dibuat"),
                 ("12:00", "TikTok",    "Video script 'Demo V-Guard Live' — antrian jadwal 13:00"),
             ]
+            plat_colors = {
+                "LinkedIn":  "#0077B5",
+                "Facebook":  "#1877F2",
+                "Instagram": "#E4405F",
+                "TikTok":    "#69C9D0",
+                "YouTube":   "#FF0000",
+            }
             for ts, plat, entry in log_entries:
-                color = {"LinkedIn":"#0077B5","Facebook":"#1877F2","Instagram":"#E4405F","TikTok":"#010101","YouTube":"#FF0000"}.get(plat, "#00d4ff")
+                color = plat_colors.get(plat, "#00d4ff")
                 st.markdown(
                     "<div style='display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;"
                     "background:#060b14;border:1px solid #1e3352;border-radius:6px;padding:10px 14px;'>"
-                    "<span style='font-family:JetBrains Mono,monospace;font-size:11px;color:#4a6a8a;flex-shrink:0;'>" + ts + "</span>"
+                    "<span style='font-family:JetBrains Mono,monospace;font-size:11px;color:#4a6a8a;flex-shrink:0;'>"
+                    + ts + "</span>"
                     "<span style='background:" + color + "22;color:" + color + ";border:1px solid " + color + "44;"
-                    "border-radius:20px;font-size:10px;padding:2px 8px;font-family:JetBrains Mono,monospace;flex-shrink:0;'>" + plat + "</span>"
-                    "<span style='font-size:12px;color:#7a9bbf;line-height:1.5;'>" + entry + "</span>"
-                    "</div>",
+                    "border-radius:20px;font-size:10px;padding:2px 8px;font-family:JetBrains Mono,monospace;"
+                    "flex-shrink:0;'>" + plat + "</span>"
+                    "<span style='font-size:12px;color:#7a9bbf;line-height:1.5;'>" + entry + "</span></div>",
                     unsafe_allow_html=True,
                 )
 
-            # Scheduling Status
+            # Scheduling
             st.markdown(
                 "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
                 "color:#e8f4ff;margin:16px 0 12px;'>Jadwal Posting Hari Ini</div>",
@@ -1387,18 +1515,32 @@ elif menu == "Admin Access":
             if not st.session_state.db_umum:
                 st.info("Belum ada pendaftar. Klien baru akan muncul setelah mengisi form di Portal Klien.")
             else:
+                # Tabel ringkas: Nama, Email, Paket, Status
+                tabel_data = []
+                for k in st.session_state.db_umum:
+                    tabel_data.append({
+                        "Nama Klien": k.get("Nama Klien", "-"),
+                        "Email":      k.get("Email", "-"),
+                        "Paket":      k.get("Produk", "-"),
+                        "Status":     k.get("Status", "-"),
+                        "WhatsApp":   k.get("WhatsApp", "-"),
+                        "Client_ID":  k.get("Client_ID", "-"),
+                    })
+                st.dataframe(pd.DataFrame(tabel_data), use_container_width=True, hide_index=True)
+                st.divider()
+
                 for i, klien in enumerate(st.session_state.db_umum):
                     if "Client_ID" not in klien:
                         st.session_state.db_umum[i]["Client_ID"] = buat_client_id(
                             klien["Nama Klien"], klien.get("WhatsApp", "")
                         )
-                    cid         = st.session_state.db_umum[i]["Client_ID"]
-                    status_kini = klien.get("Status", "Menunggu Pembayaran")
-                    dash_link   = buat_dashboard_link(cid)
+                    cid          = st.session_state.db_umum[i]["Client_ID"]
+                    status_kini  = klien.get("Status", "Menunggu Pembayaran")
+                    dash_link    = buat_dashboard_link(cid)
                     harga_bul, harga_setup = HARGA_MAP.get(klien["Produk"], ("—", "—"))
-                    is_aktif    = status_kini == "Aktif"
-                    src_klien   = SOURCE_MAP.get(klien.get("Source", "organic"), "Organik")
-                    ref_klien   = klien.get("Ref", "—")
+                    is_aktif     = status_kini == "Aktif"
+                    src_klien    = SOURCE_MAP.get(klien.get("Source", "organic"), "Organik")
+                    ref_klien    = klien.get("Ref", "—")
 
                     card_cls  = "client-card-aktif" if is_aktif else "client-card-pending"
                     badge_cls = "client-badge-aktif" if is_aktif else "client-badge-pending"
@@ -1406,26 +1548,33 @@ elif menu == "Admin Access":
                     st.markdown(
                         "<div class='" + card_cls + "'>"
                         "<div class='client-name'>" + klien["Nama Klien"] + " — " + klien.get("Nama Usaha", "-") + "</div>"
-                        "<div class='client-id'>" + cid + " · " + klien["Produk"] + " · Sumber: " + src_klien + " · Ref: " + ref_klien + "</div>"
-                        "<div class='client-meta'>WA: " + klien.get("WhatsApp", "-") + " · Harga: " + harga_bul + "/bln · Setup: " + harga_setup + "</div>"
+                        "<div class='client-id'>" + cid + " · " + klien["Produk"]
+                        + " · Sumber: " + src_klien + " · Ref: " + ref_klien + "</div>"
+                        "<div class='client-meta'>WA: " + klien.get("WhatsApp", "-")
+                        + " · Email: " + klien.get("Email", "-")
+                        + " · Harga: " + harga_bul + "/bln · Setup: " + harga_setup + "</div>"
                         "<span class='" + badge_cls + "'>" + status_kini + "</span>"
-                        "<div class='client-link'>" + dash_link + "</div>"
-                        "</div>",
+                        "<div class='client-link'>" + dash_link + "</div></div>",
                         unsafe_allow_html=True,
                     )
 
                     act1, act2, act3 = st.columns(3)
+                    wa_tgt = klien.get("WhatsApp", WA_NUMBER)
+                    if not wa_tgt.startswith("62"):
+                        wa_tgt = "62" + wa_tgt.lstrip("0")
+
                     with act1:
-                        btn_lbl = "Non-Aktifkan" if is_aktif else "Aktifkan Sekarang"
-                        if st.button(btn_lbl, key="act_" + str(i), use_container_width=True,
-                                     type="primary" if not is_aktif else "secondary"):
-                            st.session_state.db_umum[i]["Status"] = "Aktif" if not is_aktif else "Menunggu Pembayaran"
-                            st.rerun()
+                        # Tombol Activate / Deactivate
+                        if is_aktif:
+                            if st.button("Deactivate", key="deact_" + str(i), use_container_width=True):
+                                st.session_state.db_umum[i]["Status"] = "Menunggu Pembayaran"
+                                st.rerun()
+                        else:
+                            if st.button("Activate", key="act_" + str(i), use_container_width=True, type="primary"):
+                                st.session_state.db_umum[i]["Status"] = "Aktif"
+                                st.rerun()
 
                     with act2:
-                        wa_tgt = klien.get("WhatsApp", WA_NUMBER)
-                        if not wa_tgt.startswith("62"):
-                            wa_tgt = "62" + wa_tgt.lstrip("0")
                         wa_inv = (
                             "INVOICE V-GUARD AI\n\n"
                             "Yth. " + klien["Nama Klien"] + "\n"
@@ -1433,22 +1582,32 @@ elif menu == "Admin Access":
                             "Paket: " + klien["Produk"] + "\n"
                             "Biaya Bulanan: " + harga_bul + "\n"
                             "Biaya Setup: " + harga_setup + "\n\n"
-                            "Transfer ke:\nBank BCA · No. Rek: 3450074658\nA/N: Erwin Sinaga\n\n"
+                            "Transfer ke:\nBank BCA · No. Rek: 3450074658\n"
+                            "A/N: Erwin Sinaga\n\n"
                             "Konfirmasi setelah transfer untuk aktivasi segera.\n— Tim V-Guard AI"
                         )
-                        st.link_button("Kirim Invoice", "https://wa.me/" + wa_tgt + "?text=" + urllib.parse.quote(wa_inv), use_container_width=True)
+                        st.link_button(
+                            "Kirim Invoice",
+                            "https://wa.me/" + wa_tgt + "?text=" + urllib.parse.quote(wa_inv),
+                            use_container_width=True,
+                        )
 
                     with act3:
                         wa_akses = (
                             "AKSES DASHBOARD V-GUARD AI\n\n"
                             "Halo " + klien["Nama Klien"] + ",\n\n"
-                            + ("Sistem " + klien["Produk"] + " Anda telah AKTIF!\n\n" if is_aktif
+                            + ("Sistem " + klien["Produk"] + " Anda telah AKTIF!\n\n"
+                               if is_aktif
                                else "Selesaikan pembayaran untuk mengaktifkan dashboard Anda.\n\n")
                             + "Link Dashboard: " + dash_link + "\n"
                             "Client ID: " + cid + "\n\n"
                             "— Tim V-Guard AI Intelligence"
                         )
-                        st.link_button("Kirim Link Dashboard", "https://wa.me/" + wa_tgt + "?text=" + urllib.parse.quote(wa_akses), use_container_width=True)
+                        st.link_button(
+                            "Kirim Link Dashboard",
+                            "https://wa.me/" + wa_tgt + "?text=" + urllib.parse.quote(wa_akses),
+                            use_container_width=True,
+                        )
 
                     st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
 
@@ -1458,9 +1617,10 @@ elif menu == "Admin Access":
                 st.session_state.db_umum, st.session_state.api_cost_total
             )
             bg1, bg2, bg3 = st.columns(3)
-            bg1.metric("Total Omset Kontrak", "Rp " + f"{total_omset_bg:,.0f}")
+            bg1.metric("Total Omset Kontrak",   "Rp " + f"{total_omset_bg:,.0f}")
             bg2.metric("Batas Anggaran API (20%)", "Rp " + f"{batas_bg:,.0f}")
-            bg3.metric("Biaya API Terpakai", "Rp " + f"{st.session_state.api_cost_total:,.0f}", delta=f"{persen_bg:.1f}%")
+            bg3.metric("Biaya API Terpakai",    "Rp " + f"{st.session_state.api_cost_total:,.0f}",
+                       delta=f"{persen_bg:.1f}%")
             st.progress(min(persen_bg / 100, 1.0))
             if warn_bg:
                 st.warning("BUDGET ALERT: " + f"{persen_bg:.1f}%" + " dari batas. Optimalkan frekuensi AI.")
@@ -1471,30 +1631,41 @@ elif menu == "Admin Access":
 
             df_trx     = get_sample_transaksi()
             hasil_scan = scan_fraud_lokal(df_trx)
-            n_void, n_fraud, n_sus = len(hasil_scan["void"]), len(hasil_scan["fraud"]), len(hasil_scan["suspicious"])
+            n_void     = len(hasil_scan["void"])
+            n_fraud    = len(hasil_scan["fraud"])
+            n_sus      = len(hasil_scan["suspicious"])
 
             fs1, fs2, fs3 = st.columns(3)
-            fs1.metric("VOID / Cancel",    n_void,  delta="Tidak Wajar" if n_void  else "Aman")
-            fs2.metric("Duplikat Kasir",   n_fraud, delta="Terdeteksi"  if n_fraud else "Aman")
-            fs3.metric("Selisih Saldo",    n_sus,   delta="Anomali"     if n_sus   else "Aman")
+            fs1.metric("VOID / Cancel",  n_void,  delta="Tidak Wajar" if n_void  else "Aman")
+            fs2.metric("Duplikat Kasir", n_fraud, delta="Terdeteksi"  if n_fraud else "Aman")
+            fs3.metric("Selisih Saldo",  n_sus,   delta="Anomali"     if n_sus   else "Aman")
 
             tv, tf, ts = st.tabs(["VOID / Cancel", "Duplikat Kasir", "Selisih Saldo"])
             with tv:
                 if not hasil_scan["void"].empty:
                     st.error("Transaksi VOID mencurigakan ditemukan!")
-                    st.dataframe(hasil_scan["void"][["ID_Transaksi","Cabang","Kasir","Jumlah","Waktu"]], use_container_width=True)
+                    st.dataframe(
+                        hasil_scan["void"][["ID_Transaksi","Cabang","Kasir","Jumlah","Waktu"]],
+                        use_container_width=True,
+                    )
                 else:
                     st.success("Tidak ada VOID mencurigakan.")
             with tf:
                 if not hasil_scan["fraud"].empty:
                     st.error("Pola duplikat < 5 menit terdeteksi!")
-                    st.dataframe(hasil_scan["fraud"][["ID_Transaksi","Cabang","Kasir","Jumlah","selisih_menit"]], use_container_width=True)
+                    st.dataframe(
+                        hasil_scan["fraud"][["ID_Transaksi","Cabang","Kasir","Jumlah","selisih_menit"]],
+                        use_container_width=True,
+                    )
                 else:
                     st.success("Tidak ada pola duplikat.")
             with ts:
                 if not hasil_scan["suspicious"].empty:
                     st.error("Selisih saldo fisik vs sistem ditemukan!")
-                    st.dataframe(hasil_scan["suspicious"][["ID_Transaksi","Cabang","Kasir","Saldo_Fisik","Saldo_Sistem","selisih_saldo"]], use_container_width=True)
+                    st.dataframe(
+                        hasil_scan["suspicious"][["ID_Transaksi","Cabang","Kasir","Saldo_Fisik","Saldo_Sistem","selisih_saldo"]],
+                        use_container_width=True,
+                    )
                 else:
                     st.success("Saldo seimbang.")
 
@@ -1513,9 +1684,12 @@ elif menu == "Admin Access":
                             st.markdown("### Hasil AI Deep Scan:")
                             st.markdown(resp.text)
                         except Exception as e:
-                            st.error("Error AI: " + str(e))
+                            if "429" in str(e):
+                                st.error("Kuota AI habis sementara. Coba lagi nanti.")
+                            else:
+                                st.error("Error AI: " + str(e))
             else:
-                st.info("Sambungkan GEMINI_API_KEY untuk Deep Scan AI.")
+                st.info("Sambungkan GOOGLE_API_KEY di st.secrets untuk Deep Scan AI.")
 
             st.divider()
             ada_ancaman = n_void > 0 or n_fraud > 0 or n_sus > 0
@@ -1544,20 +1718,161 @@ elif menu == "Admin Access":
                     df_db["Referral_Link"]  = df_db["Client_ID"].apply(buat_referral_link)
                 st.dataframe(df_db, use_container_width=True, hide_index=True)
                 csv = df_db.to_csv(index=False).encode("utf-8")
-                st.download_button("Download Database (CSV)", data=csv, file_name="vguard_clients.csv", mime="text/csv")
+                st.download_button(
+                    "Download Database (CSV)",
+                    data=csv,
+                    file_name="vguard_clients.csv",
+                    mime="text/csv",
+                )
             else:
                 st.info("Database masih kosong di sesi ini.")
+
+        # ── Tab 7: Investor Dashboard ───────────────────────────────────────
+        with war_tabs[6]:
+            st.markdown(
+                "<div style='font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;"
+                "color:#e8f4ff;margin-bottom:4px;'>Investor Dashboard</div>"
+                "<div style='font-size:14px;color:#7a9bbf;margin-bottom:24px;'>"
+                "Ringkasan performa bisnis & proyeksi pertumbuhan V-Guard AI</div>",
+                unsafe_allow_html=True,
+            )
+
+            total_k    = len(st.session_state.db_umum)
+            aktif_k    = sum(1 for k in st.session_state.db_umum if k.get("Status") == "Aktif")
+            pending_k  = total_k - aktif_k
+            mrr        = hitung_proyeksi_omset(st.session_state.db_umum)
+            arr        = mrr * 12
+
+            # KPI Row
+            inv1, inv2, inv3, inv4 = st.columns(4)
+            inv1.metric("Total Pendaftar",  str(total_k))
+            inv2.metric("Klien Aktif",      str(aktif_k))
+            inv3.metric("MRR (Proyeksi)",   "Rp " + f"{mrr:,.0f}")
+            inv4.metric("ARR (Proyeksi)",   "Rp " + f"{arr:,.0f}")
+
+            st.divider()
+
+            inv_l, inv_r = st.columns([1.3, 1], gap="large")
+
+            with inv_l:
+                # Grafik distribusi trafik berdasarkan sumber
+                st.markdown(
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+                    "color:#e8f4ff;margin-bottom:16px;'>Distribusi Trafik Klien per Sumber</div>",
+                    unsafe_allow_html=True,
+                )
+                src_counts   = get_source_counts()
+                src_df       = pd.DataFrame({
+                    "Sumber":  [SOURCE_MAP.get(k, k) for k in src_counts.keys()],
+                    "Jumlah":  list(src_counts.values()),
+                })
+                src_df = src_df[src_df["Jumlah"] > 0]
+                if not src_df.empty:
+                    st.bar_chart(src_df.set_index("Sumber"), use_container_width=True, color="#00d4ff")
+                else:
+                    # Tampilkan data demo jika belum ada pendaftar nyata
+                    demo_src = pd.DataFrame({
+                        "Sumber":  ["WhatsApp","TikTok","Facebook","Instagram","LinkedIn","Organik"],
+                        "Jumlah":  [12, 8, 5, 7, 4, 3],
+                    })
+                    st.bar_chart(demo_src.set_index("Sumber"), use_container_width=True, color="#00d4ff")
+                    st.caption("* Data demonstrasi — akan berubah sesuai pendaftar nyata")
+
+                st.divider()
+
+                # Total Pendaftar vs Aktif — visual comparison
+                st.markdown(
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+                    "color:#e8f4ff;margin-bottom:12px;'>Total Pendaftar vs Klien Aktif</div>",
+                    unsafe_allow_html=True,
+                )
+                conv_rate = (aktif_k / total_k * 100) if total_k > 0 else 0
+                st.markdown(
+                    "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:20px;'>"
+                    "<div style='display:flex;justify-content:space-between;margin-bottom:12px;'>"
+                    "<span style='font-size:13px;color:#7a9bbf;'>Total Pendaftar</span>"
+                    "<span style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#e8f4ff;'>"
+                    + str(total_k) + "</span></div>"
+                    "<div style='display:flex;justify-content:space-between;margin-bottom:12px;'>"
+                    "<span style='font-size:13px;color:#7a9bbf;'>Klien Aktif</span>"
+                    "<span style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#00e676;'>"
+                    + str(aktif_k) + "</span></div>"
+                    "<div style='display:flex;justify-content:space-between;margin-bottom:14px;'>"
+                    "<span style='font-size:13px;color:#7a9bbf;'>Menunggu Pembayaran</span>"
+                    "<span style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#ffab00;'>"
+                    + str(pending_k) + "</span></div>"
+                    "<div style='background:#1e3352;border-radius:4px;height:8px;overflow:hidden;'>"
+                    "<div style='background:linear-gradient(90deg,#00e676,#00d4ff);height:100%;width:"
+                    + f"{conv_rate:.0f}" + "%;'></div></div>"
+                    "<div style='font-size:11px;color:#7a9bbf;margin-top:6px;'>Conversion Rate: "
+                    + f"{conv_rate:.1f}%" + "</div></div>",
+                    unsafe_allow_html=True,
+                )
+
+            with inv_r:
+                # Proyeksi omset berdasarkan paket
+                st.markdown(
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+                    "color:#e8f4ff;margin-bottom:16px;'>Proyeksi MRR per Paket</div>",
+                    unsafe_allow_html=True,
+                )
+
+                paket_count = {p: 0 for p in HARGA_NUMERIK.keys()}
+                for k in st.session_state.db_umum:
+                    if k.get("Status") == "Aktif":
+                        produk_k = k.get("Produk", "V-LITE")
+                        if produk_k in paket_count:
+                            paket_count[produk_k] += 1
+
+                for paket_name, count in paket_count.items():
+                    harga_n = HARGA_NUMERIK.get(paket_name, 0)
+                    kontrib = harga_n * count
+                    st.markdown(
+                        "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:10px;"
+                        "padding:14px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;'>"
+                        "<div>"
+                        "<div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#e8f4ff;'>"
+                        + paket_name + "</div>"
+                        "<div style='font-size:11px;color:#7a9bbf;'>" + str(count) + " klien aktif</div>"
+                        "</div>"
+                        "<div style='text-align:right;'>"
+                        "<div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#00d4ff;'>"
+                        "Rp " + f"{kontrib:,.0f}" + "</div>"
+                        "<div style='font-size:10px;color:#4a6a8a;'>/bulan</div>"
+                        "</div></div>",
+                        unsafe_allow_html=True,
+                    )
+
+                st.divider()
+
+                # Proyeksi 12 bulan (asumsi pertumbuhan 15%/bulan)
+                st.markdown(
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
+                    "color:#e8f4ff;margin-bottom:12px;'>Proyeksi Pertumbuhan 6 Bulan</div>",
+                    unsafe_allow_html=True,
+                )
+                base_mrr = max(mrr, 1_500_000)  # minimal demo value
+                proyeksi_bulan = []
+                for i in range(1, 7):
+                    month_name = (datetime.datetime.now() + datetime.timedelta(days=30*i)).strftime("%b %Y")
+                    projected  = base_mrr * ((1.15) ** i)
+                    proyeksi_bulan.append({"Bulan": month_name, "MRR (Rp)": int(projected)})
+
+                df_proj = pd.DataFrame(proyeksi_bulan)
+                st.bar_chart(df_proj.set_index("Bulan"), use_container_width=True, color="#7b2fff")
+                st.caption("* Proyeksi asumsi pertumbuhan 15%/bulan")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================================================================
-# 16. FOOTER
+# 15. FOOTER TETAP
 # =============================================================================
 st.markdown(
     "<div style='background:#060b14;border-top:1px solid #1e3352;padding:28px 48px;"
     "display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;'>"
     "<div>"
-    "<span style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#00d4ff;'>V-Guard AI Intelligence</span>"
+    "<span style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#00d4ff;'>"
+    "V-Guard AI Intelligence</span>"
     "<span style='color:#7a9bbf;font-size:12px;margin-left:12px;'>V-GUARD AI Ecosystem ©2026</span>"
     "</div>"
     "<div style='font-size:12px;color:#7a9bbf;'>"
