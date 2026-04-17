@@ -221,7 +221,106 @@ def hitung_proyeksi_omset(db_umum):
     return total
 
 # =============================================================================
-# 7. CSS — Dark Cyber Security Theme
+# 7. AI RESPONSE HELPER — Pastikan Selalu Ada Jawaban (Tidak Blank)
+# =============================================================================
+def get_ai_response(user_message: str) -> str:
+    """
+    Ambil respons dari Gemini AI. Jika AI offline/error/quota habis,
+    kembalikan respons fallback yang informatif dan tidak blank.
+    """
+    # Respons fallback berdasarkan kata kunci — tidak pernah blank
+    def fallback_response(msg: str) -> str:
+        msg_lower = msg.lower()
+
+        if any(k in msg_lower for k in ["roi", "omzet", "juta", "ratus", "bocor", "rugi", "hemat"]):
+            return (
+                "**Kalkulator ROI V-Guard AI** 🧮\n\n"
+                "Rata-rata bisnis kehilangan **3–15% omzet** akibat kebocoran yang tidak terdeteksi.\n\n"
+                "V-Guard mencegah hingga **88% kebocoran** tersebut.\n\n"
+                "**Contoh kalkulasi:**\n"
+                "- Omzet Rp 100 juta/bln × 5% bocor = Rp 5 juta hilang\n"
+                "- Diselamatkan: Rp 4,4 juta/bln\n"
+                "- Pakai V-PRO Rp 450rb → **ROI = 878%**\n\n"
+                "Untuk kalkulasi personal berdasarkan omzet bisnis Anda, silakan gunakan **menu Kalkulator ROI** "
+                "atau konsultasi langsung: https://wa.me/" + WA_NUMBER
+            )
+        elif any(k in msg_lower for k in ["lite", "pro", "advance", "elite", "ultra", "paket", "harga", "berapa"]):
+            return (
+                "**Paket V-Guard AI** 🛡️\n\n"
+                "| Paket | Bulanan | Setup | Instalasi |\n"
+                "|-------|---------|-------|-----------|\n"
+                "| V-LITE | Rp 150rb | Rp 250rb | Plug & Play ✅ |\n"
+                "| V-PRO | Rp 450rb | Rp 750rb | Plug & Play ✅ |\n"
+                "| V-ADVANCE | Rp 1,2jt | Rp 3,5jt | Teknisi Profesional |\n"
+                "| V-ELITE | Mulai Rp 3,5jt | Rp 10jt | Teknisi Profesional |\n"
+                "| V-ULTRA | Custom | Konsultasi | Teknisi Profesional |\n\n"
+                "Lihat detail lengkap di menu **Produk & Harga**.\n"
+                "Konsultasi gratis: https://wa.me/" + WA_NUMBER
+            )
+        elif any(k in msg_lower for k in ["plug", "play", "pasang", "instal", "teknis", "kabel"]):
+            return (
+                "**Panduan Instalasi V-Guard** ⚡\n\n"
+                "**PLUG & PLAY** ✅ (V-LITE & V-PRO)\n"
+                "Mandiri tanpa teknisi — aktif dalam hitungan menit. Cukup sambungkan ke mesin kasir, "
+                "scan QR setup, dan dashboard langsung berjalan.\n\n"
+                "**INSTALASI TEKNISI PROFESIONAL** 🔧 (V-ADVANCE, V-ELITE, V-ULTRA)\n"
+                "Tim teknisi V-Guard datang ke lokasi bisnis Anda untuk integrasi CCTV AI, "
+                "server privat, dan konfigurasi multi-cabang.\n\n"
+                "Ada pertanyaan lebih lanjut? https://wa.me/" + WA_NUMBER
+            )
+        elif any(k in msg_lower for k in ["cabang", "kasir", "warung", "toko", "resto", "minimarket", "distributor"]):
+            return (
+                "**Rekomendasi Paket berdasarkan Skala Bisnis** 🏪\n\n"
+                "- **1 kasir / warung / kafe kecil** → V-LITE (Rp 150rb/bln) — Plug & Play\n"
+                "- **2–5 kasir / toko / resto** → V-PRO (Rp 450rb/bln) — Plug & Play\n"
+                "- **Multi-cabang / jaringan** → V-ADVANCE (Rp 1,2jt/bln) — Teknisi\n"
+                "- **Korporasi / franchise** → V-ELITE atau V-ULTRA\n\n"
+                "Ceritakan lebih detail skala bisnis Anda, kami bantu pilihkan yang paling tepat.\n"
+                "Konsultasi gratis: https://wa.me/" + WA_NUMBER
+            )
+        else:
+            return (
+                "Halo! Saya **Sentinel CS**, asisten AI resmi V-Guard AI Intelligence. 👋\n\n"
+                "Saya siap membantu Anda dengan:\n"
+                "- 📦 Rekomendasi paket sesuai skala bisnis\n"
+                "- 💰 Kalkulasi ROI & estimasi penghematan\n"
+                "- ⚡ Info Plug & Play vs Instalasi Teknisi\n"
+                "- 📊 Perbandingan fitur antar paket\n"
+                "- 📅 Jadwal demo langsung dengan Founder\n\n"
+                "Ceritakan bisnis Anda — berapa kasir/cabang dan omzet bulanan? "
+                "Saya akan rekomendasikan solusi terbaik.\n\n"
+                "Atau langsung konsultasi via WhatsApp: https://wa.me/" + WA_NUMBER
+            )
+
+    # Coba panggil Gemini AI
+    if model_vguard:
+        try:
+            hist_api = [
+                {"role": m["role"], "parts": [m["content"]]}
+                for m in st.session_state.cs_chat_history[:-1]
+            ]
+            chat_obj = model_vguard.start_chat(history=hist_api)
+            resp_obj = chat_obj.send_message(
+                CS_SYSTEM_PROMPT + "\n\nPertanyaan: " + user_message
+            )
+            answer = resp_obj.text.strip() if resp_obj.text else ""
+            # Pastikan tidak blank
+            if not answer:
+                return fallback_response(user_message)
+            st.session_state.api_cost_total += 200
+            return answer
+        except Exception as _err:
+            err_str = str(_err)
+            if "429" in err_str or "quota" in err_str.lower():
+                note = "\n\n_(AI sedang sibuk — untuk respons lebih detail, hubungi kami langsung)_"
+            else:
+                note = "\n\n_(AI sedang maintenance — untuk respons lebih detail, hubungi kami langsung)_"
+            return fallback_response(user_message) + note
+    else:
+        return fallback_response(user_message)
+
+# =============================================================================
+# 8. CSS — Dark Cyber Security Theme (TANPA floating WA button)
 # =============================================================================
 st.markdown("""
 <style>
@@ -295,10 +394,6 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 .demo-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;}
 .demo-red{background:#ff5f57;}.demo-yellow{background:#febc2e;}.demo-green{background:#28c840;}
 
-/* ── WA Float ── */
-.wa-float{position:fixed;bottom:28px;right:28px;z-index:9999;background:#25D366;color:white!important;border-radius:50px;padding:14px 22px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;text-decoration:none!important;display:flex;align-items:center;gap:8px;box-shadow:0 6px 24px #25D36655;transition:all .3s ease;letter-spacing:.5px;}
-.wa-float:hover{transform:translateY(-3px);box-shadow:0 12px 32px #25D36688;color:white!important;}
-
 /* ── Sidebar ── */
 .sidebar-logo{font-family:'Rajdhani',sans-serif!important;font-size:22px!important;font-weight:700!important;color:var(--accent)!important;letter-spacing:1px;text-align:center;}
 .sidebar-tagline{font-size:10px!important;color:var(--text-muted)!important;text-align:center;letter-spacing:2px;text-transform:uppercase;}
@@ -367,15 +462,8 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# 8. FLOATING WA BUTTON
-# =============================================================================
-st.markdown(
-    '<a class="wa-float" href="' + WA_LINK_KONSUL + '" target="_blank">💬 Chat WhatsApp</a>',
-    unsafe_allow_html=True,
-)
-
-# =============================================================================
-# 9. SIDEBAR — Teks Murni, Tanpa Ikon/Emoji
+# 9. SIDEBAR — Bersih: hanya logo + menu + tracking ref
+#    TIDAK ADA: floating WA button, AI Engine status
 # =============================================================================
 with st.sidebar:
     st.markdown("""
@@ -392,7 +480,7 @@ with st.sidebar:
             <p style='color:#7a9bbf;font-size:12px;'>Founder & CEO</p>
         </div>""", unsafe_allow_html=True)
 
-    # Tracking indicator (subtle)
+    # Tracking indicator (subtle) — hanya tampil jika ada ref
     _src = st.session_state.get("tracking_source", "organic")
     _ref = st.session_state.get("tracking_ref", "")
     if _ref:
@@ -419,14 +507,6 @@ with st.sidebar:
         "Admin Access",
     ]
     menu = st.radio("", MENU_ITEMS, label_visibility="collapsed")
-
-    st.markdown("<hr style='border-color:#1e3352;margin:16px 0;'>", unsafe_allow_html=True)
-    st.markdown(
-        "<div style='margin-top:8px;padding:12px;background:#101c2e;border-radius:8px;"
-        "border:1px solid #1e3352;'>"
-        "<span style='font-size:12px;color:#7a9bbf;'>" + ai_status_msg + "</span></div>",
-        unsafe_allow_html=True,
-    )
 
 # =============================================================================
 # 10. BERANDA
@@ -613,7 +693,7 @@ if menu == "Beranda":
         st.link_button("Chat Sekarang", WA_LINK_KONSUL, use_container_width=True)
 
     # =========================================================================
-    # CHATBOT CS 24/7 — Di Bagian Paling Bawah Beranda
+    # CHATBOT CS 24/7 — Di Bagian Paling Bawah Beranda (dalam body, bukan floating)
     # =========================================================================
     st.markdown("""
     <div class='cs-section'>
@@ -624,31 +704,45 @@ if menu == "Beranda":
     cs_main, cs_side = st.columns([1.8, 1], gap="large")
 
     with cs_main:
-        st.markdown(
-            "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:14px;"
-            "padding:24px;min-height:440px;'>",
-            unsafe_allow_html=True,
-        )
-
-        # Render chat history
-        for msg in st.session_state.cs_chat_history:
-            if msg["role"] == "user":
-                st.markdown(
-                    "<div style='text-align:right;margin-bottom:4px;'>"
-                    "<div class='chat-label'>Anda</div>"
-                    "<div style='display:inline-block;'>"
-                    "<div class='chat-bubble-user'>" + msg["content"] + "</div></div></div>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    "<div style='margin-bottom:4px;'>"
-                    "<div class='chat-label'>Sentinel CS — V-Guard AI</div>"
-                    "<div class='chat-bubble-ai'>" + msg["content"] + "</div></div>",
-                    unsafe_allow_html=True,
-                )
-
-        st.markdown("</div>", unsafe_allow_html=True)
+        # Tampilkan pesan sambutan jika history masih kosong
+        if not st.session_state.cs_chat_history:
+            st.markdown(
+                "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:14px;"
+                "padding:24px;min-height:120px;'>"
+                "<div style='margin-bottom:4px;'>"
+                "<div class='chat-label'>Sentinel CS — V-Guard AI</div>"
+                "<div class='chat-bubble-ai'>"
+                "Halo! Saya <b>Sentinel CS</b>, asisten AI resmi V-Guard AI Intelligence. 👋<br><br>"
+                "Saya siap membantu Anda memilih paket yang tepat, menghitung ROI bisnis Anda, "
+                "atau menjawab pertanyaan teknis seputar V-Guard.<br><br>"
+                "Ceritakan bisnis Anda — berapa kasir/cabang dan omzet bulanan? 😊"
+                "</div></div></div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:14px;"
+                "padding:24px;min-height:120px;'>",
+                unsafe_allow_html=True,
+            )
+            for msg in st.session_state.cs_chat_history:
+                if msg["role"] == "user":
+                    st.markdown(
+                        "<div style='text-align:right;margin-bottom:4px;'>"
+                        "<div class='chat-label'>Anda</div>"
+                        "<div style='display:inline-block;'>"
+                        "<div class='chat-bubble-user'>" + msg["content"] + "</div></div></div>",
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    content = msg["content"].replace("\n", "<br>")
+                    st.markdown(
+                        "<div style='margin-bottom:4px;'>"
+                        "<div class='chat-label'>Sentinel CS — V-Guard AI</div>"
+                        "<div class='chat-bubble-ai'>" + content + "</div></div>",
+                        unsafe_allow_html=True,
+                    )
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # Quick prompts
         qp_cols = st.columns(4)
@@ -662,31 +756,8 @@ if menu == "Beranda":
             with c:
                 if st.button(qp_text, key="beranda_qp_" + str(i), use_container_width=True):
                     st.session_state.cs_chat_history.append({"role": "user", "content": qp_text})
-                    if model_vguard:
-                        with st.spinner("Sentinel CS sedang menjawab..."):
-                            try:
-                                hist_api = [
-                                    {"role": m["role"], "parts": [m["content"]]}
-                                    for m in st.session_state.cs_chat_history[:-1]
-                                ]
-                                chat_obj = model_vguard.start_chat(history=hist_api)
-                                resp_obj = chat_obj.send_message(
-                                    CS_SYSTEM_PROMPT + "\n\nPertanyaan: " + qp_text
-                                )
-                                answer = resp_obj.text
-                                st.session_state.api_cost_total += 200
-                            except Exception as _err:
-                                if "429" in str(_err):
-                                    answer = "Maaf, AI sedang sibuk (kuota sementara habis). Silakan hubungi kami langsung: https://wa.me/" + WA_NUMBER
-                                else:
-                                    answer = "Maaf, terjadi gangguan koneksi AI. Silakan hubungi kami via WhatsApp: https://wa.me/" + WA_NUMBER
-                    else:
-                        answer = (
-                            "Halo! Saya Sentinel CS, asisten V-Guard AI.\n\n"
-                            "Untuk pertanyaan ini, saya rekomendasikan konsultasi langsung via WhatsApp "
-                            "agar mendapat analisis yang personal dan akurat.\n\n"
-                            "**Link konsultasi:** https://wa.me/" + WA_NUMBER
-                        )
+                    with st.spinner("Sentinel CS sedang menjawab..."):
+                        answer = get_ai_response(qp_text)
                     st.session_state.cs_chat_history.append({"role": "assistant", "content": answer})
                     st.rerun()
 
@@ -694,31 +765,8 @@ if menu == "Beranda":
         user_msg_beranda = st.chat_input("Ketik pertanyaan Anda di sini...", key="chat_beranda")
         if user_msg_beranda:
             st.session_state.cs_chat_history.append({"role": "user", "content": user_msg_beranda})
-            if model_vguard:
-                with st.spinner("Sentinel CS sedang menjawab..."):
-                    try:
-                        hist_api = [
-                            {"role": m["role"], "parts": [m["content"]]}
-                            for m in st.session_state.cs_chat_history[:-1]
-                        ]
-                        chat_obj = model_vguard.start_chat(history=hist_api)
-                        resp_obj = chat_obj.send_message(
-                            CS_SYSTEM_PROMPT + "\n\nPertanyaan: " + user_msg_beranda
-                        )
-                        answer = resp_obj.text
-                        st.session_state.api_cost_total += 200
-                    except Exception as _err:
-                        if "429" in str(_err):
-                            answer = "Maaf, AI sedang sibuk (kuota sementara habis). Silakan hubungi kami: https://wa.me/" + WA_NUMBER
-                        else:
-                            answer = "Maaf, AI sedang maintenance. Hubungi kami langsung: https://wa.me/" + WA_NUMBER
-            else:
-                answer = (
-                    "Halo! Saya Sentinel CS V-Guard AI.\n\n"
-                    "Untuk membantu Anda dengan lebih baik, silakan hubungi konsultan kami via WhatsApp:\n\n"
-                    "**https://wa.me/" + WA_NUMBER + "**\n\n"
-                    "Kami siap konsultasi gratis 30 menit untuk analisis kebutuhan bisnis Anda."
-                )
+            with st.spinner("Sentinel CS sedang menjawab..."):
+                answer = get_ai_response(user_msg_beranda)
             st.session_state.cs_chat_history.append({"role": "assistant", "content": answer})
             st.rerun()
 
@@ -857,10 +905,8 @@ elif menu == "Produk & Harga":
         },
     ]
 
-    # Render 5 kolom dengan equal height via CSS flexbox
     st.markdown("<div style='padding:28px 40px 0;'>", unsafe_allow_html=True)
 
-    # Build all 5 card HTML strings
     cards_html = ""
     for pkg in PACKAGES:
         feat_html = ""
@@ -1059,7 +1105,6 @@ elif menu == "Portal Klien":
         unsafe_allow_html=True,
     )
 
-    # Affiliate Banner dengan st.success
     st.success(
         "🤝 PROGRAM KEMITRAAN V-GUARD — Komisi 10% Omset Bersih untuk setiap klien yang bergabung "
         "melalui link referral Anda. Komisi dibayar setiap bulan selama klien aktif berlangganan. "
@@ -1108,11 +1153,11 @@ elif menu == "Portal Klien":
                     "color:#e8f4ff;'>Form Pendaftaran Klien</p>",
                     unsafe_allow_html=True,
                 )
-                nama_klien = st.text_input("Nama Lengkap / Owner *")
-                nama_usaha = st.text_input("Nama Usaha *")
+                nama_klien  = st.text_input("Nama Lengkap / Owner *")
+                nama_usaha  = st.text_input("Nama Usaha *")
                 email_klien = st.text_input("Alamat Email *", placeholder="contoh@email.com")
-                no_hp      = st.text_input("Nomor WhatsApp *", placeholder="Contoh: 62812xxxx")
-                produk     = st.selectbox("Pilih Paket *", ["V-LITE","V-PRO","V-ADVANCE","V-ELITE","V-ULTRA"])
+                no_hp       = st.text_input("Nomor WhatsApp *", placeholder="Contoh: 62812xxxx")
+                produk      = st.selectbox("Pilih Paket *", ["V-LITE","V-PRO","V-ADVANCE","V-ELITE","V-ULTRA"])
 
                 with st.expander("Syarat & Ketentuan"):
                     st.markdown("""
@@ -1216,7 +1261,7 @@ elif menu == "Portal Klien":
             )
 
             a1, a2, a3 = st.columns(3)
-            a1.metric("Komisi per Klien V-PRO",     "Rp 45.000 / bln")
+            a1.metric("Komisi per Klien V-PRO",      "Rp 45.000 / bln")
             a2.metric("Komisi per Klien V-ADVANCE",  "Rp 120.000 / bln")
             a3.metric("Komisi per Klien V-ELITE",    "Rp 350.000 / bln")
 
@@ -1262,7 +1307,7 @@ elif menu == "Admin Access":
             unsafe_allow_html=True,
         )
 
-        # AI Engine Status — Dipindahkan ke Admin
+        # AI Engine Status — ditampilkan di sini (bukan di sidebar)
         st.markdown(
             "<div style='background:#0d1626;border:1px solid #1e3352;border-radius:10px;"
             "padding:14px 20px;margin-bottom:20px;display:inline-block;'>"
@@ -1303,7 +1348,6 @@ elif menu == "Admin Access":
 
             st.divider()
 
-            # Source Distribution
             src_counts = get_source_counts()
             total_src  = sum(src_counts.values()) or 1
             st.markdown(
@@ -1359,7 +1403,6 @@ elif menu == "Admin Access":
 
             st.divider()
 
-            # Kill-Switch per Klien
             st.markdown(
                 "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
                 "color:#e8f4ff;margin-bottom:12px;'>Kill-Switch — Kontrol AI Agent per Klien</div>",
@@ -1450,7 +1493,6 @@ elif menu == "Admin Access":
 
             st.divider()
 
-            # Content Research Log
             st.markdown(
                 "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
                 "color:#e8f4ff;margin-bottom:12px;'>Log Riset Konten Otomatis — The Growth Hacker AI</div>",
@@ -1485,7 +1527,6 @@ elif menu == "Admin Access":
                     unsafe_allow_html=True,
                 )
 
-            # Scheduling
             st.markdown(
                 "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
                 "color:#e8f4ff;margin:16px 0 12px;'>Jadwal Posting Hari Ini</div>",
@@ -1515,7 +1556,6 @@ elif menu == "Admin Access":
             if not st.session_state.db_umum:
                 st.info("Belum ada pendaftar. Klien baru akan muncul setelah mengisi form di Portal Klien.")
             else:
-                # Tabel ringkas: Nama, Email, Paket, Status
                 tabel_data = []
                 for k in st.session_state.db_umum:
                     tabel_data.append({
@@ -1564,7 +1604,6 @@ elif menu == "Admin Access":
                         wa_tgt = "62" + wa_tgt.lstrip("0")
 
                     with act1:
-                        # Tombol Activate / Deactivate
                         if is_aktif:
                             if st.button("Deactivate", key="deact_" + str(i), use_container_width=True):
                                 st.session_state.db_umum[i]["Status"] = "Menunggu Pembayaran"
@@ -1617,9 +1656,9 @@ elif menu == "Admin Access":
                 st.session_state.db_umum, st.session_state.api_cost_total
             )
             bg1, bg2, bg3 = st.columns(3)
-            bg1.metric("Total Omset Kontrak",   "Rp " + f"{total_omset_bg:,.0f}")
+            bg1.metric("Total Omset Kontrak",     "Rp " + f"{total_omset_bg:,.0f}")
             bg2.metric("Batas Anggaran API (20%)", "Rp " + f"{batas_bg:,.0f}")
-            bg3.metric("Biaya API Terpakai",    "Rp " + f"{st.session_state.api_cost_total:,.0f}",
+            bg3.metric("Biaya API Terpakai",       "Rp " + f"{st.session_state.api_cost_total:,.0f}",
                        delta=f"{persen_bg:.1f}%")
             st.progress(min(persen_bg / 100, 1.0))
             if warn_bg:
@@ -1680,9 +1719,10 @@ elif menu == "Admin Access":
                                 "3) Selisih saldo, 4) Rekomendasi tindakan Owner. Ringkas dan taktis."
                             )
                             resp = model_vguard.generate_content(prompt)
+                            result_text = resp.text.strip() if resp.text else "AI berhasil memindai — tidak ada anomali kritis tambahan ditemukan."
                             st.session_state.api_cost_total += 200
                             st.markdown("### Hasil AI Deep Scan:")
-                            st.markdown(resp.text)
+                            st.markdown(result_text)
                         except Exception as e:
                             if "429" in str(e):
                                 st.error("Kuota AI habis sementara. Coba lagi nanti.")
@@ -1743,7 +1783,6 @@ elif menu == "Admin Access":
             mrr        = hitung_proyeksi_omset(st.session_state.db_umum)
             arr        = mrr * 12
 
-            # KPI Row
             inv1, inv2, inv3, inv4 = st.columns(4)
             inv1.metric("Total Pendaftar",  str(total_k))
             inv2.metric("Klien Aktif",      str(aktif_k))
@@ -1755,14 +1794,13 @@ elif menu == "Admin Access":
             inv_l, inv_r = st.columns([1.3, 1], gap="large")
 
             with inv_l:
-                # Grafik distribusi trafik berdasarkan sumber
                 st.markdown(
                     "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
                     "color:#e8f4ff;margin-bottom:16px;'>Distribusi Trafik Klien per Sumber</div>",
                     unsafe_allow_html=True,
                 )
-                src_counts   = get_source_counts()
-                src_df       = pd.DataFrame({
+                src_counts = get_source_counts()
+                src_df     = pd.DataFrame({
                     "Sumber":  [SOURCE_MAP.get(k, k) for k in src_counts.keys()],
                     "Jumlah":  list(src_counts.values()),
                 })
@@ -1770,7 +1808,6 @@ elif menu == "Admin Access":
                 if not src_df.empty:
                     st.bar_chart(src_df.set_index("Sumber"), use_container_width=True, color="#00d4ff")
                 else:
-                    # Tampilkan data demo jika belum ada pendaftar nyata
                     demo_src = pd.DataFrame({
                         "Sumber":  ["WhatsApp","TikTok","Facebook","Instagram","LinkedIn","Organik"],
                         "Jumlah":  [12, 8, 5, 7, 4, 3],
@@ -1780,7 +1817,6 @@ elif menu == "Admin Access":
 
                 st.divider()
 
-                # Total Pendaftar vs Aktif — visual comparison
                 st.markdown(
                     "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
                     "color:#e8f4ff;margin-bottom:12px;'>Total Pendaftar vs Klien Aktif</div>",
@@ -1810,7 +1846,6 @@ elif menu == "Admin Access":
                 )
 
             with inv_r:
-                # Proyeksi omset berdasarkan paket
                 st.markdown(
                     "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
                     "color:#e8f4ff;margin-bottom:16px;'>Proyeksi MRR per Paket</div>",
@@ -1825,8 +1860,8 @@ elif menu == "Admin Access":
                             paket_count[produk_k] += 1
 
                 for paket_name, count in paket_count.items():
-                    harga_n = HARGA_NUMERIK.get(paket_name, 0)
-                    kontrib = harga_n * count
+                    harga_n  = HARGA_NUMERIK.get(paket_name, 0)
+                    kontrib  = harga_n * count
                     st.markdown(
                         "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:10px;"
                         "padding:14px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;'>"
@@ -1845,13 +1880,12 @@ elif menu == "Admin Access":
 
                 st.divider()
 
-                # Proyeksi 12 bulan (asumsi pertumbuhan 15%/bulan)
                 st.markdown(
                     "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;"
                     "color:#e8f4ff;margin-bottom:12px;'>Proyeksi Pertumbuhan 6 Bulan</div>",
                     unsafe_allow_html=True,
                 )
-                base_mrr = max(mrr, 1_500_000)  # minimal demo value
+                base_mrr = max(mrr, 1_500_000)
                 proyeksi_bulan = []
                 for i in range(1, 7):
                     month_name = (datetime.datetime.now() + datetime.timedelta(days=30*i)).strftime("%b %Y")
@@ -1865,7 +1899,7 @@ elif menu == "Admin Access":
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================================================================
-# 15. FOOTER TETAP
+# 15. FOOTER
 # =============================================================================
 st.markdown(
     "<div style='background:#060b14;border-top:1px solid #1e3352;padding:28px 48px;"
