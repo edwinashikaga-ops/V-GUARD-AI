@@ -1,14 +1,6 @@
 # =============================================================================
 # V-GUARD AI INTELLIGENCE — app.py  (V-GUARD AI Ecosystem ©2026)
 # Full Rewrite v2.1 — Professional SaaS Edition
-# Changelog v2.1:
-#   - Admin/Investor menu diprivatisasi (hanya muncul saat authenticated)
-#   - The Concierge Chat widget fully functional (z-index fixed, event listeners fixed)
-#   - fetch_pos_data() stub + YOLO integration module
-#   - AI Fraud Alarm komparasi kasir vs CCTV
-#   - Auto-Billing H-7 reminder
-#   - Referral link per klien + komisi 10%
-#   - Admin Referral Dashboard (daftar referral, status, kalkulasi komisi)
 # =============================================================================
 
 import streamlit as st
@@ -71,12 +63,12 @@ st.set_page_config(
 # 4. SESSION STATE DEFAULTS
 # =============================================================================
 _DEFAULTS = {
-    "authenticated":        False,   # Admin/Investor gate
+    "authenticated":        False,
     "admin_logged_in":      False,
     "investor_pw_ok":       False,
-    "db_umum":              [],      # list of client dicts
-    "db_pengajuan":         [],      # list of pending orders from portal
-    "db_referrals":         [],      # list of referral tracking dicts
+    "db_umum":              [],
+    "db_pengajuan":         [],
+    "db_referrals":         [],
     "api_cost_total":       0.0,
     "cs_chat_history":      [],
     "agent_kill_switch":    {},
@@ -176,7 +168,7 @@ def detect_package_from_message(text):
     return max(scores, key=scores.get) if scores else None
 
 def build_package_cta(pkg):
-    hb, hs   = HARGA_MAP.get(pkg, ("Custom","Konsultasi"))
+    hb, hs   = HARGA_MAP.get(pkg, ("Custom","—"))
     plink    = PRODUCT_LINKS.get(pkg, BASE_APP_URL)
     olink    = ORDER_LINKS.get(pkg, WA_LINK_KONSUL)
     label_map = {
@@ -191,11 +183,11 @@ def build_package_cta(pkg):
         else "🔧 **Instalasi Profesional** — teknisi V-Guard datang ke lokasi bisnis Anda."
     )
     return (
-        f"\n\n---\n{emoji_map.get(pkg,'🛡️')} **Rekomendasi Terbaik: {pkg}**\n"
-        f"_{label_map.get(pkg,'')}_\n\n"
-        f"💰 **Biaya Bulanan:** {hb}\n🛠️ **Biaya Setup:** {hs}\n{install_note}\n\n"
-        f"👉 **[Lihat Detail {pkg}]({plink})**   📲 **[Order via WhatsApp]({olink})**\n\n"
-        f"_Setiap hari tanpa V-Guard adalah hari yang berisiko. Saya siap memandu Anda! 🚀_"
+        "\n\n---\n" + emoji_map.get(pkg,'🛡️') + " **Rekomendasi Terbaik: " + pkg + "**\n"
+        "_" + label_map.get(pkg,'') + "_\n\n"
+        "💰 **Biaya Bulanan:** " + hb + "\n🛠️ **Biaya Setup:** " + hs + "\n" + install_note + "\n\n"
+        "👉 **[Lihat Detail " + pkg + "](" + plink + ")**   📲 **[Order via WhatsApp](" + olink + ")**\n\n"
+        "_Setiap hari tanpa V-Guard adalah hari yang berisiko. Saya siap memandu Anda! 🚀_"
     )
 
 # =============================================================================
@@ -245,14 +237,15 @@ def buat_referral_link(cid):
     return BASE_APP_URL + "/?ref=" + cid + "&source=referral"
 
 def buat_payment_link(pkg, nama):
+    hb, hs = HARGA_MAP.get(pkg, ("—","—"))
     txt = urllib.parse.quote(
-        f"PEMBAYARAN V-GUARD AI\n\nYth. {nama}\nPaket: {pkg}\n"
-        f"Biaya Bulanan: {HARGA_MAP.get(pkg,('—','—'))[0]}\n"
-        f"Biaya Setup   : {HARGA_MAP.get(pkg,('—','—'))[1]}\n\n"
-        f"Transfer ke:\nBank BCA · 3450074658 · a/n Erwin Sinaga\n\n"
-        f"Konfirmasi setelah transfer ke nomor ini.\n— Tim V-Guard AI"
+        "PEMBAYARAN V-GUARD AI\n\nYth. " + nama + "\nPaket: " + pkg + "\n"
+        "Biaya Bulanan: " + hb + "\n"
+        "Biaya Setup   : " + hs + "\n\n"
+        "Transfer ke:\nBank BCA · 3450074658 · a/n Erwin Sinaga\n\n"
+        "Konfirmasi setelah transfer ke nomor ini.\n— Tim V-Guard AI"
     )
-    return f"https://wa.me/{WA_NUMBER}?text={txt}"
+    return "https://wa.me/" + WA_NUMBER + "?text=" + txt
 
 def hitung_proyeksi_omset(db):
     return sum(HARGA_NUMERIK.get(k.get("Produk","V-LITE"),0) for k in db if k.get("Status")=="Aktif")
@@ -288,109 +281,21 @@ def scan_fraud_lokal(df):
 # 9. INTEGRATION STUBS — POS & YOLO CCTV
 # =============================================================================
 
-def fetch_pos_data(api_url: str = "http://localhost:8080/api/transactions", api_key: str = "") -> pd.DataFrame:
+def fetch_pos_data(api_url="http://localhost:8080/api/transactions", api_key=""):
     """
-    Fetch real-time POS (Point-of-Sale) transaction data from local kasir server.
-
-    Integration Guide:
-    ------------------
-    1. Set `api_url` to your local kasir API endpoint.
-       Example: "http://192.168.1.100:8080/api/transactions?limit=50"
-    2. Pass `api_key` if your kasir server requires authentication.
-       The key will be sent as Bearer token in the Authorization header.
-    3. Response format expected (JSON array):
-       [
-         {
-           "id": "TRX-001",
-           "branch": "Outlet A",
-           "cashier": "Budi",
-           "amount": 150000,
-           "timestamp": "2026-04-18T10:00:00",
-           "status": "NORMAL",
-           "physical_balance": 150000,
-           "system_balance": 150000
-         },
-         ...
-       ]
-    4. On production: replace the stub below with actual requests.get() call.
-
-    Returns:
-        pd.DataFrame with columns matching get_sample_transaksi() schema.
+    Fetch real-time POS transaction data from local kasir server.
+    Returns pd.DataFrame with columns matching get_sample_transaksi() schema.
     """
-    # ── STUB: return sample data ──────────────────────────────────────────────
-    # TODO (production): uncomment and configure below:
-    #
-    # import requests
-    # headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
-    # try:
-    #     resp = requests.get(api_url, headers=headers, timeout=5)
-    #     resp.raise_for_status()
-    #     raw = resp.json()
-    #     df = pd.DataFrame(raw)
-    #     df.rename(columns={
-    #         "id": "ID_Transaksi", "branch": "Cabang", "cashier": "Kasir",
-    #         "amount": "Jumlah", "timestamp": "Waktu", "status": "Status",
-    #         "physical_balance": "Saldo_Fisik", "system_balance": "Saldo_Sistem"
-    #     }, inplace=True)
-    #     df["Waktu"] = pd.to_datetime(df["Waktu"])
-    #     return df
-    # except Exception as e:
-    #     st.warning(f"Gagal terhubung ke server kasir: {e}")
-    #     return get_sample_transaksi()  # fallback
-    # ─────────────────────────────────────────────────────────────────────────
+    # TODO (production): replace stub with actual requests.get() call
     return get_sample_transaksi()
 
 
-def process_yolo_cctv_frame(frame_data: dict) -> dict:
+def process_yolo_cctv_frame(frame_data):
     """
     Process a single CCTV frame through YOLO object detection.
-
-    Integration Guide:
-    ------------------
-    1. Install: pip install ultralytics opencv-python
-    2. Place model at: models/vguard_yolo.pt
-       (Fine-tuned on suspicious behavior: item concealment, unscanned items, etc.)
-    3. Send frames via websocket or HTTP POST from CCTV DVR to this function.
-
-    frame_data expected keys:
-        - "frame_b64": base64-encoded JPEG frame string
-        - "camera_id": str (e.g. "cam_01")
-        - "timestamp": ISO timestamp string
-
-    Returns dict with:
-        - "camera_id": str
-        - "timestamp": str
-        - "detections": list of {"label": str, "confidence": float, "bbox": [x,y,w,h]}
-        - "alert": bool — True if suspicious behavior detected
-        - "alert_reason": str
+    Returns dict with detections and alert status.
     """
-    # ── STUB ──────────────────────────────────────────────────────────────────
-    # TODO (production):
-    #
-    # import cv2, base64, numpy as np
-    # from ultralytics import YOLO
-    # model = YOLO("models/vguard_yolo.pt")
-    #
-    # img_bytes = base64.b64decode(frame_data["frame_b64"])
-    # np_arr = np.frombuffer(img_bytes, np.uint8)
-    # frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-    # results = model(frame, conf=0.45)
-    # detections = []
-    # alert = False
-    # alert_reason = ""
-    # SUSPICIOUS_LABELS = {"unscanned_item", "item_concealment", "cash_swap", "void_gesture"}
-    # for r in results:
-    #     for box in r.boxes:
-    #         label = model.names[int(box.cls)]
-    #         conf  = float(box.conf)
-    #         bbox  = box.xywh[0].tolist()
-    #         detections.append({"label": label, "confidence": conf, "bbox": bbox})
-    #         if label in SUSPICIOUS_LABELS and conf > 0.6:
-    #             alert = True
-    #             alert_reason = f"Terdeteksi: {label} (conf={conf:.2f}) di {frame_data['camera_id']}"
-    # return {"camera_id": frame_data["camera_id"], "timestamp": frame_data["timestamp"],
-    #         "detections": detections, "alert": alert, "alert_reason": alert_reason}
-    # ─────────────────────────────────────────────────────────────────────────
+    # TODO (production): integrate with ultralytics YOLO model
     return {
         "camera_id": frame_data.get("camera_id", "cam_01"),
         "timestamp": frame_data.get("timestamp", str(datetime.datetime.now())),
@@ -400,41 +305,28 @@ def process_yolo_cctv_frame(frame_data: dict) -> dict:
     }
 
 
-def trigger_alarm(reason: str, kasir: str, cabang: str, amount: float, wa_owner: str = WA_NUMBER):
+def trigger_alarm(reason, kasir, cabang, amount, wa_owner=WA_NUMBER):
     """
     Trigger a WhatsApp fraud alarm to the business owner.
-
-    Called when:
-    - AI Fraud Alarm: mismatch between kasir data and CCTV detection
-    - VOID pattern detected
-    - Saldo selisih > threshold
-
-    In production, integrate with WhatsApp Business API or Fonnte/WA Gateway.
-    Here we generate a pre-filled WA link as action button.
+    Returns a pre-filled WA link.
     """
     msg = (
-        f"🚨 *ALERT V-GUARD AI*\n\n"
-        f"📍 Cabang: {cabang}\n"
-        f"👤 Kasir: {kasir}\n"
-        f"💰 Jumlah: Rp {amount:,.0f}\n"
-        f"⚠️ Alasan: {reason}\n"
-        f"🕐 Waktu: {datetime.datetime.now().strftime('%H:%M:%S WIB')}\n\n"
-        f"Segera cek rekaman CCTV & laporan kasir.\n— Sentinel AI V-Guard"
+        "🚨 *ALERT V-GUARD AI*\n\n"
+        "📍 Cabang: " + cabang + "\n"
+        "👤 Kasir: " + kasir + "\n"
+        "💰 Jumlah: Rp " + "{:,.0f}".format(amount) + "\n"
+        "⚠️ Alasan: " + reason + "\n"
+        "🕐 Waktu: " + datetime.datetime.now().strftime("%H:%M:%S WIB") + "\n\n"
+        "Segera cek rekaman CCTV & laporan kasir.\n— Sentinel AI V-Guard"
     )
-    wa_link = f"https://wa.me/{wa_owner}?text=" + urllib.parse.quote(msg)
+    wa_link = "https://wa.me/" + wa_owner + "?text=" + urllib.parse.quote(msg)
     return wa_link
 
 
-def check_ai_fraud_alarm(pos_df: pd.DataFrame, yolo_results: list) -> list:
+def check_ai_fraud_alarm(pos_df, yolo_results):
     """
     Compare POS kasir data with YOLO CCTV detections to identify mismatches.
-
-    Logic:
-    - If YOLO detects 'unscanned_item' or 'item_concealment' at a timestamp
-      where the kasir shows VOID or zero transaction → HIGH RISK fraud flag.
-    - Returns list of alarm dicts.
-
-    In production, correlate by camera_id → branch → cashier.
+    Returns list of alarm dicts.
     """
     alarms = []
     void_rows = pos_df[pos_df["Status"] == "VOID"]
@@ -445,21 +337,16 @@ def check_ai_fraud_alarm(pos_df: pd.DataFrame, yolo_results: list) -> list:
                     "kasir":    row["Kasir"],
                     "cabang":   row["Cabang"],
                     "jumlah":   row["Jumlah"],
-                    "reason":   f"VOID + CCTV: {yolo['alert_reason']}",
+                    "reason":   "VOID + CCTV: " + yolo["alert_reason"],
                     "camera_id":yolo["camera_id"],
                 })
     return alarms
 
 
-def check_autobilling_reminders(db_klien: list) -> list:
+def check_autobilling_reminders(db_klien):
     """
     Check clients with invoices due in 7 days (H-7) and 1 day (H-1).
     Returns list of reminder dicts for admin action.
-
-    In production:
-    - Store invoice_due_date per client in db_umum.
-    - Run this check daily via cron/scheduler.
-    - Automatically send WA message via Fonnte or WA Business API.
     """
     today = datetime.date.today()
     reminders = []
@@ -485,7 +372,7 @@ def check_autobilling_reminders(db_klien: list) -> list:
     return reminders
 
 
-def track_referral(ref_cid: str, new_client_data: dict, setup_amount: int):
+def track_referral(ref_cid, new_client_data, setup_amount):
     """
     Log a referral conversion and calculate 10% commission on setup fee.
     Appends to st.session_state.db_referrals.
@@ -535,11 +422,11 @@ def get_ai_response(user_message):
             net   = saved - biaya
             roi   = (net / biaya * 100) if biaya > 0 else 0
             roi_block = (
-                f"\n\n💡 **Estimasi ROI:**\n"
-                f"- Omzet: Rp {omzet_val:,.0f}/bln\n"
-                f"- Kebocoran 5%: Rp {bocor:,.0f}/bln\n"
-                f"- Diselamatkan (88%): **Rp {saved:,.0f}/bln**\n"
-                f"- ROI estimasi: **{roi:.0f}%** 🚀"
+                "\n\n💡 **Estimasi ROI:**\n"
+                "- Omzet: Rp {:,.0f}/bln\n".format(omzet_val) +
+                "- Kebocoran 5%: Rp {:,.0f}/bln\n".format(bocor) +
+                "- Diselamatkan (88%): **Rp {:,.0f}/bln**\n".format(saved) +
+                "- ROI estimasi: **{:.0f}%** 🚀".format(roi)
             )
 
         if any(k in m for k in ["harga","berapa","biaya","tarif","paket"]):
@@ -555,7 +442,7 @@ def get_ai_response(user_message):
         elif any(k in m for k in ["roi","hemat","bocor","rugi","omzet"]):
             base = "Rata-rata bisnis kehilangan **3–15% omzet** per bulan tanpa disadari. V-Guard AI mencegah hingga **88% kebocoran** otomatis.\n\nBoleh share **omzet bulanan** bisnis Bapak/Ibu? 😊"
         elif any(k in m for k in ["book demo","demo","coba"]):
-            base = f"Demo V-Guard **gratis 30 menit** — Pak Erwin langsung tunjukkan cara sistem mendeteksi kecurangan secara real-time.\n\n📲 [Book Demo Gratis]({WA_LINK_DEMO})"
+            base = "Demo V-Guard **gratis 30 menit** — Pak Erwin langsung tunjukkan cara sistem mendeteksi kecurangan secara real-time.\n\n📲 [Book Demo Gratis](" + WA_LINK_DEMO + ")"
         elif any(k in m for k in ["daftar","order","beli","aktivasi","mulai"]):
             base = "Siap! Untuk memulai, Bapak/Ibu bisa pilih paket yang sesuai:\n\n🔵 V-LITE (Rp 150rb) · ⚡ V-PRO (Rp 450rb) · 🟣 V-ADVANCE (Rp 1,2jt)\n🟢 V-ELITE (Rp 3,5jt) · 👑 V-ULTRA (Custom)\n\nBoleh saya tahu jenis usaha Bapak/Ibu agar saya pilihkan yang paling tepat? 😊"
         elif any(k in m for k in ["referral","komisi","ajak","teman"]):
@@ -574,12 +461,14 @@ def get_ai_response(user_message):
             for m in st.session_state.cs_chat_history[:-1]:
                 hist.append({"role": "model" if m["role"]=="assistant" else "user", "parts":[m["content"]]})
             chat_obj = model_vguard.start_chat(history=hist)
-            prompt = CS_SYSTEM_PROMPT + f"\n\nPesan Klien: {user_message}"
+            bul, _ = HARGA_MAP.get(detected, ("Custom","—")) if detected else ("—","—")
+            prompt = CS_SYSTEM_PROMPT + "\n\nPesan Klien: " + user_message
             if detected:
-                bul,_ = HARGA_MAP.get(detected,("Custom","—"))
-                prompt += (f"\n\n[HINT: Paket cocok: {detected} ({bul}/bln). "
-                           f"Sertakan link: {PRODUCT_LINKS[detected]} dan {ORDER_LINKS[detected]}. "
-                           f"Akhiri dengan pertanyaan follow-up. Respons max 150 kata.]")
+                prompt += (
+                    "\n\n[HINT: Paket cocok: " + detected + " (" + bul + "/bln). "
+                    "Sertakan link: " + PRODUCT_LINKS[detected] + " dan " + ORDER_LINKS[detected] + ". "
+                    "Akhiri dengan pertanyaan follow-up. Respons max 150 kata.]"
+                )
             resp = chat_obj.send_message(prompt)
             ans  = resp.text.strip() if resp.text else ""
             if ans:
@@ -616,7 +505,6 @@ section[data-testid="stSidebar"]{
 section[data-testid="stSidebar"] *{color:var(--text-primary)!important;}
 .main .block-container{padding:0!important;max-width:100%!important;}
 
-/* Buttons */
 .stButton>button{
     background:linear-gradient(135deg,var(--accent2),var(--accent))!important;
     color:#000!important;font-family:'Rajdhani',sans-serif!important;
@@ -627,31 +515,26 @@ section[data-testid="stSidebar"] *{color:var(--text-primary)!important;}
 .stButton>button[kind="secondary"]{background:transparent!important;color:var(--accent)!important;border:1px solid var(--accent)!important;}
 a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#128C7E)!important;color:white!important;font-weight:700!important;border-radius:6px!important;}
 
-/* Inputs */
 .stTextInput>div>div>input,.stTextArea>div>div>textarea,.stNumberInput>div>div>input,.stSelectbox>div>div{
     background-color:var(--bg-card)!important;border:1px solid var(--border)!important;
     color:var(--text-primary)!important;border-radius:6px!important;
 }
 .stTextInput>div>div>input:focus,.stTextArea>div>div>textarea:focus{border-color:var(--accent)!important;box-shadow:0 0 10px var(--border-glow)!important;}
 
-/* Metrics */
 [data-testid="stMetric"]{background:var(--bg-card)!important;border:1px solid var(--border)!important;border-radius:10px!important;padding:16px!important;}
 [data-testid="stMetricLabel"]{color:var(--text-muted)!important;font-size:12px!important;}
 [data-testid="stMetricValue"]{color:var(--accent)!important;font-family:'Rajdhani',sans-serif!important;font-size:28px!important;}
 
-/* Tabs */
 .stTabs [data-baseweb="tab-list"]{background:var(--bg-secondary)!important;border-bottom:1px solid var(--border)!important;}
 .stTabs [data-baseweb="tab"]{color:var(--text-muted)!important;font-family:'Rajdhani',sans-serif!important;font-weight:600!important;font-size:15px!important;}
 .stTabs [aria-selected="true"]{color:var(--accent)!important;border-bottom:2px solid var(--accent)!important;}
 
-/* Misc */
 [data-testid="stDataFrame"]{border:1px solid var(--border)!important;border-radius:8px!important;}
 [data-testid="stExpander"]{border:1px solid var(--border)!important;border-radius:8px!important;background:var(--bg-card)!important;}
 .stProgress>div>div>div{background:linear-gradient(90deg,var(--accent2),var(--accent))!important;}
 ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg-primary);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}::-webkit-scrollbar-thumb:hover{background:var(--accent);}
 
-/* ── FLOATING CHAT WIDGET — z-index fixed, pointer-events ensured ── */
 #vg-fab {
     position: fixed !important;
     bottom: 24px !important;
@@ -662,7 +545,7 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
     background: linear-gradient(135deg, #0091ff, #00d4ff) !important;
     border: none !important;
     cursor: pointer !important;
-    z-index: 2147483647 !important;   /* max possible z-index */
+    z-index: 2147483647 !important;
     box-shadow: 0 4px 24px #00d4ff55 !important;
     display: flex !important;
     align-items: center !important;
@@ -824,7 +707,6 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 #vg-send:hover  { transform: scale(1.08); box-shadow: 0 2px 14px #00d4ff44; }
 #vg-send:active { transform: scale(0.94); }
 
-/* ── HERO & PAGE COMPONENTS ── */
 .hero-section{background:linear-gradient(135deg,#060b14 0%,#0a1628 50%,#080f1e 100%);padding:60px 48px 48px;position:relative;overflow:hidden;border-bottom:1px solid var(--border);}
 .hero-section::before{content:'';position:absolute;top:-50%;right:-10%;width:600px;height:600px;background:radial-gradient(circle,#00d4ff11 0%,transparent 70%);pointer-events:none;}
 .hero-badge{display:inline-block;background:linear-gradient(135deg,#00d4ff22,#0091ff22);border:1px solid var(--accent);color:var(--accent)!important;font-family:'JetBrains Mono',monospace!important;font-size:11px!important;padding:4px 14px;border-radius:20px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px;}
@@ -857,7 +739,6 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 .sidebar-tagline{font-size:10px!important;color:var(--text-muted)!important;text-align:center;letter-spacing:2px;text-transform:uppercase;}
 .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px;animation:vgPulse 2s infinite;}
 
-/* ── PACKAGE CARDS ── */
 .pkg-card{background:#101c2e;border:1px solid #1e3352;border-radius:14px;padding:22px 16px 20px;display:flex;flex-direction:column;height:100%;transition:all .3s ease;position:relative;}
 .pkg-card:hover{border-color:#00d4ff;box-shadow:0 0 28px #00d4ff11;transform:translateY(-4px);}
 .pkg-card-ultra{background:linear-gradient(160deg,#12100a,#1a1500,#0e0e0e);border:1px solid #ffd70055;border-radius:14px;padding:22px 16px 20px;display:flex;flex-direction:column;height:100%;transition:all .3s ease;position:relative;}
@@ -889,7 +770,6 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 .install-pnp{background:#00e67618;color:#00e676!important;border:1px solid #00e67644;}
 .install-pro{background:#ffab0018;color:#ffab00!important;border:1px solid #ffab0044;}
 
-/* ── CLIENT / PORTAL CARDS ── */
 .client-card-aktif{background:#101c2e;border:1px solid #1e3352;border-left:3px solid #00e676;border-radius:12px;padding:20px;margin-bottom:14px;}
 .client-card-pending{background:#101c2e;border:1px solid #1e3352;border-left:3px solid #ffab00;border-radius:12px;padding:20px;margin-bottom:14px;}
 .client-badge-aktif{display:inline-block;background:#00e67618;color:#00e676!important;border:1px solid #00e67644;border-radius:20px;font-size:10px!important;padding:2px 10px;font-family:'JetBrains Mono',monospace!important;}
@@ -897,34 +777,28 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 .login-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:36px;}
 .ref-link-box{background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#00d4ff;word-break:break-all;}
 
-/* ── AGENT CARDS ── */
 .agent-card{background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:16px;transition:all .3s ease;position:relative;}
 .agent-card:hover{border-color:#00d4ff;box-shadow:0 4px 20px #00d4ff11;}
 .agent-card-active{border-left:3px solid #00e676;}
 .agent-card-offline{border-left:3px solid #ff3b5c;}
 
-/* ── CCTV MONITOR ── */
 .cctv-frame{background:#000;border:2px solid #1e3352;border-radius:8px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
 .cctv-overlay{position:absolute;top:8px;left:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#00e676;background:#00000088;padding:4px 8px;border-radius:4px;}
 .cctv-alert{position:absolute;top:8px;right:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#ff3b5c;background:#00000088;padding:4px 8px;border-radius:4px;animation:vgPulse 1s infinite;}
 
-/* ── INVESTOR CARD ── */
 .investor-stat{background:linear-gradient(135deg,#0d1626,#101c2e);border:1px solid #1e3352;border-radius:12px;padding:24px;text-align:center;}
 .investor-stat-num{font-family:'Rajdhani',sans-serif!important;font-size:36px!important;font-weight:700!important;color:#ffd700!important;}
 .investor-stat-lbl{font-size:12px!important;color:#7a9bbf!important;margin-top:4px;}
 
-/* ── PAIN CARDS ── */
 .pain-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px;border-left:3px solid var(--danger);}
 .pain-card:hover{border-color:var(--accent);background:var(--bg-hover);}
 .pain-title{font-family:'Rajdhani',sans-serif!important;font-size:16px!important;font-weight:700!important;color:var(--text-primary)!important;}
 .pain-desc{font-size:13px!important;color:var(--text-muted)!important;margin-top:4px;}
 
-/* ── MATCH BANNER ── */
 .match-banner{background:linear-gradient(135deg,#00d4ff18,#0091ff11);border:1px solid #00d4ff55;border-left:3px solid #00d4ff;border-radius:10px;padding:16px 20px;margin-bottom:16px;}
 .match-banner-title{font-family:'Rajdhani',sans-serif!important;font-size:15px!important;font-weight:700!important;color:#00d4ff!important;margin-bottom:4px;}
 .match-banner-body{font-size:13px!important;color:#9ab8d4!important;}
 
-/* ── REFERRAL CARDS ── */
 .ref-card{background:#101c2e;border:1px solid #1e3352;border-radius:10px;padding:16px 20px;margin-bottom:10px;border-left:3px solid #ffd700;}
 .ref-card-paid{border-left-color:#00e676;}
 .ref-badge-pending{display:inline-block;background:#ffd70018;color:#ffd700!important;border:1px solid #ffd70044;border-radius:20px;font-size:10px!important;padding:2px 10px;font-family:'JetBrains Mono',monospace!important;}
@@ -933,7 +807,7 @@ a[data-testid="stLinkButton"] button{background:linear-gradient(135deg,#25D366,#
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# 12. THE CONCIERGE CHAT WIDGET — Fully Functional, Fixed z-index & Events
+# 12. THE CONCIERGE CHAT WIDGET
 # =============================================================================
 CHAT_WIDGET_HTML = """
 <div id="vg-fab" role="button" aria-label="Chat dengan Sentinel CS" tabindex="0">
@@ -942,7 +816,6 @@ CHAT_WIDGET_HTML = """
 </div>
 
 <div id="vg-chatbox" role="dialog" aria-label="Sentinel CS Chat">
-    <!-- Header -->
     <div id="vg-header">
         <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0091ff,#00d4ff);
                     display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🛡️</div>
@@ -956,10 +829,9 @@ CHAT_WIDGET_HTML = """
         <button id="vg-close" aria-label="Tutup chat"
                 style="background:transparent;border:none;color:#7a9bbf;font-size:20px;
                        cursor:pointer;padding:4px 6px;line-height:1;border-radius:6px;
-                       transition:color .15s;outline:none;">✕</button>
+                       transition:color .15s;outline:none;">&#x2715;</button>
     </div>
 
-    <!-- Messages -->
     <div id="vg-msgs">
         <div class="vg-bot">
             Halo! 👋 Saya <strong>Sentinel CS</strong>, konsultan AI V-Guard.<br><br>
@@ -969,7 +841,6 @@ CHAT_WIDGET_HTML = """
         </div>
     </div>
 
-    <!-- Quick Pills -->
     <div id="vg-pills">
         <span class="vg-pill" data-msg="Apa itu V-Guard?">🛡️ Tentang V-Guard</span>
         <span class="vg-pill" data-msg="Lihat semua paket dan harga">📦 Lihat Paket</span>
@@ -980,10 +851,9 @@ CHAT_WIDGET_HTML = """
         <span class="vg-pill" data-msg="Bagaimana program referral dan komisi?">🔗 Referral</span>
     </div>
 
-    <!-- Input Row -->
     <div id="vg-inputrow">
         <textarea id="vg-input" rows="1" placeholder="Ceritakan bisnis Anda..."></textarea>
-        <button id="vg-send" aria-label="Kirim pesan">➤</button>
+        <button id="vg-send" aria-label="Kirim pesan">&#x27A4;</button>
     </div>
 </div>
 
@@ -991,12 +861,10 @@ CHAT_WIDGET_HTML = """
 (function() {
     'use strict';
 
-    /* ── State ── */
     var isOpen    = false;
     var isBusy    = false;
     var history   = [];
 
-    /* ── Elements ── */
     var fab      = document.getElementById('vg-fab');
     var chatbox  = document.getElementById('vg-chatbox');
     var notif    = document.getElementById('vg-notif');
@@ -1006,10 +874,8 @@ CHAT_WIDGET_HTML = """
     var sendBtn  = document.getElementById('vg-send');
     var pills    = document.querySelectorAll('.vg-pill');
 
-    /* ── Guard: abort if elements missing (e.g. re-render) ── */
     if (!fab || !chatbox) return;
 
-    /* ── Toggle ── */
     function openChat() {
         isOpen = true;
         chatbox.classList.add('vg-open');
@@ -1025,12 +891,10 @@ CHAT_WIDGET_HTML = """
     }
     function toggleChat() { if (isOpen) closeChat(); else openChat(); }
 
-    /* ── Scroll ── */
     function scrollBottom() {
         msgs.scrollTop = msgs.scrollHeight;
     }
 
-    /* ── Add bubble ── */
     function addBubble(html, isUser) {
         var div = document.createElement('div');
         div.className = isUser ? 'vg-usr' : 'vg-bot';
@@ -1040,7 +904,6 @@ CHAT_WIDGET_HTML = """
         return div;
     }
 
-    /* ── Typing indicator ── */
     function showTyping() {
         var div = document.createElement('div');
         div.className = 'vg-bot';
@@ -1054,7 +917,6 @@ CHAT_WIDGET_HTML = """
         if (t) t.remove();
     }
 
-    /* ── Fallback rules ── */
     var rules = [
         { keys:['warung','1 kasir','kios','lapak','usaha kecil','kecil'],
           reply:'Untuk usaha skala ini, saya rekomendasikan <strong>V-LITE</strong> (Rp 150.000/bln). Plug &amp; Play — aktif dalam menit tanpa teknisi! 🔵<br><br>💡 Mau saya bantu hitung estimasi kebocoran bulanan Bapak/Ibu?' },
@@ -1084,10 +946,9 @@ CHAT_WIDGET_HTML = """
 
     function getFallback(msg) {
         var m = msg.toLowerCase();
-        /* ROI calculation inline */
-        var roiMatch = m.match(/(\d[\d.,]*)\s*(juta|jt|miliar|m\b|rb|ribu)?/);
+        var roiMatch = m.match(/(\\d[\\d.,]*)\\s*(juta|jt|miliar|m\\b|rb|ribu)?/);
         if (roiMatch && (m.includes('omzet') || m.includes('roi') || m.includes('juta') || m.includes('jt'))) {
-            var raw = parseFloat(roiMatch[1].replace(/,/g,'.').replace(/\./g,'')) || 0;
+            var raw = parseFloat(roiMatch[1].replace(/,/g,'.').replace(/\\./g,'')) || 0;
             var unit = (roiMatch[2]||'').toLowerCase();
             var omzet = raw;
             if (unit==='juta'||unit==='jt') omzet = raw * 1e6;
@@ -1119,7 +980,6 @@ CHAT_WIDGET_HTML = """
                'Saya langsung rekomendasikan solusi terbaik &amp; hitung ROI-nya! 💡';
     }
 
-    /* ── Send message ── */
     function sendMsg() {
         if (isBusy) return;
         var text = input.value.trim();
@@ -1149,36 +1009,29 @@ CHAT_WIDGET_HTML = """
         return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    /* ── Auto-resize textarea ── */
     input.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 90) + 'px';
     });
 
-    /* ── Event listeners ── */
-    /* FAB click */
     fab.addEventListener('click', function(e) {
         e.stopPropagation();
         toggleChat();
     });
-    /* FAB keyboard */
     fab.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleChat(); }
     });
 
-    /* Close button */
     closeBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         closeChat();
     });
 
-    /* Send button */
     sendBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         sendMsg();
     });
 
-    /* Enter key in textarea (Shift+Enter = newline) */
     input.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -1186,7 +1039,6 @@ CHAT_WIDGET_HTML = """
         }
     });
 
-    /* Quick pills */
     pills.forEach(function(pill) {
         pill.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -1200,22 +1052,16 @@ CHAT_WIDGET_HTML = """
         });
     });
 
-    /* Click inside chatbox should not close */
     chatbox.addEventListener('click', function(e) { e.stopPropagation(); });
 
-    /* Close on outside click */
     document.addEventListener('click', function() { if (isOpen) closeChat(); });
 
-    /* Notification dot after 4s */
     setTimeout(function() {
         if (!isOpen) notif.style.display = 'block';
     }, 4000);
 
-    /* Proactive message after 12s */
     setTimeout(function() {
-        if (!isOpen) {
-            openChat();
-        }
+        if (!isOpen) { openChat(); }
     }, 14000);
 
 })();
@@ -1246,10 +1092,6 @@ with st.sidebar:
     _ref = st.session_state.get("tracking_ref","")
     _src = st.session_state.get("tracking_source","organic")
     if _ref:
-        # Auto-track referral if a ref is present and not yet logged
-        referral_already_logged = any(
-            r.get("ref_cid") == _ref for r in st.session_state.db_referrals
-        )
         st.markdown(
             "<div style='background:#00d4ff11;border:1px solid #00d4ff33;border-radius:6px;"
             "padding:6px 10px;margin-bottom:10px;font-size:10px;color:#00d4ff;"
@@ -1276,16 +1118,11 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # ── Public menu always visible ──
     PUBLIC_MENU = ["Beranda", "Produk & Harga", "Kalkulator ROI", "Portal Klien"]
-
-    # ── Private menu only visible when admin authenticated ──
     PRIVATE_MENU = ["Investor Area", "Admin Access"] if st.session_state.authenticated else []
-
     MENU_OPTIONS = PUBLIC_MENU + PRIVATE_MENU
     menu = st.radio("", MENU_OPTIONS, label_visibility="collapsed")
 
-    # Admin quick-login in sidebar (only show if NOT authenticated)
     if not st.session_state.authenticated:
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
         st.markdown(
@@ -1327,7 +1164,6 @@ if menu == "Beranda":
     with c2: st.link_button("Chat Konsultasi", WA_LINK_KONSUL, use_container_width=True)
     st.markdown("<div style='height:48px;'></div>", unsafe_allow_html=True)
 
-    # STATS
     st.markdown("<div class='section-wrapper'>", unsafe_allow_html=True)
     s1,s2,s3,s4 = st.columns(4)
     for col,(n,l) in zip([s1,s2,s3,s4],[
@@ -1335,15 +1171,19 @@ if menu == "Beranda":
         ("< 5 Dtk","Deteksi Real-Time"),("5 Tier","Solusi Semua Skala"),
     ]):
         with col:
-            st.markdown("<div class='stat-card'><div class='stat-number'>" + n + "</div><div class='stat-label'>" + l + "</div></div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='stat-card'><div class='stat-number'>" + n + "</div>"
+                "<div class='stat-label'>" + l + "</div></div>",
+                unsafe_allow_html=True
+            )
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # PAIN POINTS
     st.markdown("""
     <div class='section-wrapper-alt'>
         <div class='section-header'>Apakah Anda Mengalami <span class='section-accent'>Ini?</span></div>
         <div class='section-subheader'>Tanda-tanda "The Invisible Leak" yang diam-diam menguras bisnis Anda</div>
     </div>""", unsafe_allow_html=True)
+
     PAINS = [
         ("💸","Omzet Besar, Uang Tidak Sinkron","Laporan kasir dan mutasi bank selalu berbeda."),
         ("📦","Stok Hilang Misterius","Barang keluar tapi tidak ada di laporan penjualan."),
@@ -1356,14 +1196,19 @@ if menu == "Beranda":
     for col,group in zip([pc1,pc2,pc3],[PAINS[:2],PAINS[2:4],PAINS[4:]]):
         with col:
             for icon,title,desc in group:
-                st.markdown("<div class='pain-card'><div style='font-size:22px;margin-bottom:6px;'>" + icon + "</div><div class='pain-title'>" + title + "</div><div class='pain-desc'>" + desc + "</div></div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<div class='pain-card'><div style='font-size:22px;margin-bottom:6px;'>" + icon + "</div>"
+                    "<div class='pain-title'>" + title + "</div>"
+                    "<div class='pain-desc'>" + desc + "</div></div>",
+                    unsafe_allow_html=True
+                )
 
-    # FEATURES
     st.markdown("""
     <div class='section-wrapper'>
         <div class='section-header'>Ekosistem <span class='section-accent'>V-Guard</span></div>
         <div class='section-subheader'>Satu platform, semua celah kecurangan tertutup secara otomatis</div>
     </div>""", unsafe_allow_html=True)
+
     FEATS = [
         ("🔗","Auto Data Integration","Tarik data langsung dari mesin kasir via IP/API. Tanpa input manual CSV."),
         ("🚨","Anomaly Detection Engine","Tandai VOID, refund, dan diskon mencurigakan secara otomatis dalam detik."),
@@ -1375,15 +1220,20 @@ if menu == "Beranda":
     fc = st.columns(3)
     for i,(icon,title,desc) in enumerate(FEATS):
         with fc[i%3]:
-            st.markdown("<div class='feature-card'><div style='font-size:28px;margin-bottom:12px;'>" + icon + "</div><div class='feature-title'>" + title + "</div><div class='feature-desc'>" + desc + "</div></div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='feature-card'><div style='font-size:28px;margin-bottom:12px;'>" + icon + "</div>"
+                "<div class='feature-title'>" + title + "</div>"
+                "<div class='feature-desc'>" + desc + "</div></div>",
+                unsafe_allow_html=True
+            )
             st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
 
-    # DEMO MOCKUP
     st.markdown("""
     <div class='section-wrapper-alt'>
         <div class='section-header'>Lihat <span class='section-accent'>Dashboard</span> V-Guard</div>
         <div class='section-subheader'>Real-time monitoring langsung dari browser Anda</div>
     </div>""", unsafe_allow_html=True)
+
     dm1,dm2 = st.columns([1.6,1])
     with dm1:
         st.markdown("""
@@ -1405,16 +1255,23 @@ if menu == "Beranda":
         </div>""", unsafe_allow_html=True)
     with dm2:
         for icon,val,lbl in [("🔍","3 Anomali","Terdeteksi malam ini"),("📲","1 Alert","Dikirim ke Owner"),("📊","100%","Audit Coverage"),("⚡","0.2ms","Response Time")]:
-            st.markdown("<div style='background:#101c2e;border:1px solid #1e3352;border-radius:8px;padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:16px;'><span style='font-size:22px;'>" + icon + "</span><div><div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#00d4ff;'>" + val + "</div><div style='font-size:12px;color:#7a9bbf;'>" + lbl + "</div></div></div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:8px;padding:14px 18px;"
+                "margin-bottom:10px;display:flex;align-items:center;gap:16px;'>"
+                "<span style='font-size:22px;'>" + icon + "</span>"
+                "<div><div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#00d4ff;'>" + val + "</div>"
+                "<div style='font-size:12px;color:#7a9bbf;'>" + lbl + "</div></div></div>",
+                unsafe_allow_html=True
+            )
     _,cc,_ = st.columns([1,1,1])
     with cc: st.link_button("Book Demo Langsung", WA_LINK_DEMO, use_container_width=True)
 
-    # TESTIMONIALS
     st.markdown("""
     <div class='section-wrapper'>
         <div class='section-header'>Kata Mereka yang <span class='section-accent'>Sudah Merasakan</span></div>
         <div class='section-subheader'>Bisnis nyata, penghematan nyata</div>
     </div>""", unsafe_allow_html=True)
+
     t1,t2,t3 = st.columns(3)
     TESTI = [
         ("Sebelum pakai V-Guard, kasir saya melakukan void hampir setiap malam. Sekarang semuanya ter-record dan saya bisa tidur tenang.","Bpk. Timotius M.","Owner Kafe & Resto, Jakarta Selatan","Hemat ±Rp 8 Juta/bulan"),
@@ -1423,9 +1280,16 @@ if menu == "Beranda":
     ]
     for col,(text,author,role,result) in zip([t1,t2,t3],TESTI):
         with col:
-            st.markdown("<div class='testimonial-card'><div class='stars'>★★★★★</div><div class='testimonial-text'>\"" + text + "\"</div><div class='testimonial-author'>" + author + "</div><div class='testimonial-role'>" + role + "</div><div style='margin-top:12px;padding:8px 12px;background:#00d4ff11;border-radius:6px;font-size:12px;color:#00d4ff;font-family:JetBrains Mono,monospace;'>✓ " + result + "</div></div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='testimonial-card'><div class='stars'>★★★★★</div>"
+                "<div class='testimonial-text'>\"" + text + "\"</div>"
+                "<div class='testimonial-author'>" + author + "</div>"
+                "<div class='testimonial-role'>" + role + "</div>"
+                "<div style='margin-top:12px;padding:8px 12px;background:#00d4ff11;border-radius:6px;"
+                "font-size:12px;color:#00d4ff;font-family:JetBrains Mono,monospace;'>✓ " + result + "</div></div>",
+                unsafe_allow_html=True
+            )
 
-    # FINAL CTA
     st.markdown("""
     <div style='background:linear-gradient(135deg,#0d1a2e,#0a1628);padding:48px;text-align:center;border-top:1px solid #1e3352;border-bottom:1px solid #1e3352;'>
         <div style='font-family:Rajdhani,sans-serif;font-size:36px;font-weight:700;color:#e8f4ff;margin-bottom:12px;'>Siap Menutup Kebocoran Bisnis Anda?</div>
@@ -1449,11 +1313,16 @@ elif menu == "Produk & Harga":
     st.markdown("</div>", unsafe_allow_html=True)
 
     PACKAGES = [
-        {"key":"LITE","name":"V-LITE","badge_cls":"badge-entry","badge_txt":"Entry Level","focus":"Fondasi keamanan digital untuk usaha satu kasir","price":"Rp 150.000","period":"/ bulan","setup":"Setup: Rp 250.000","popular":False,"ultra":False,"plug_play":True,"features":["Deteksi VOID & Cancel","Daily AI Summary via WhatsApp","Dashboard Web Real-Time","Laporan Kebocoran Otomatis","Support via WhatsApp"]},
-        {"key":"PRO","name":"V-PRO","badge_cls":"badge-pro","badge_txt":"Pro","focus":"Otomasi admin, stok, & audit bank tanpa input manual","price":"Rp 450.000","period":"/ bulan","setup":"Setup: Rp 750.000","popular":True,"ultra":False,"plug_play":True,"features":["Semua fitur V-LITE","VCS Secure Integration","Bank Statement Audit Otomatis","Input Invoice via OCR","Laporan PDF Terjadwal","Support Prioritas 24/7"]},
-        {"key":"ADVANCE","name":"V-ADVANCE","badge_cls":"badge-adv","badge_txt":"Pengawas Aktif","focus":"Mata AI pengawas aktif — visual, stok & multi-cabang","price":"Rp 1.200.000","period":"/ bulan","setup":"Setup: Rp 3.500.000","popular":False,"ultra":False,"plug_play":False,"features":["Semua fitur V-PRO","CCTV AI — Visual Cashier Audit","WhatsApp Fraud Alarm Instan","H-7 Auto Collection Reminder","Multi-Cabang Dashboard"]},
-        {"key":"ELITE","name":"V-ELITE","badge_cls":"badge-ent","badge_txt":"Korporasi","focus":"Kedaulatan data penuh — server privat & AI forensik","price":"Mulai Rp 3.500.000","period":"/ bulan","setup":"Setup: Rp 10.000.000","popular":False,"ultra":False,"plug_play":False,"features":["Semua fitur V-ADVANCE","Deep Learning Forensik AI","Dedicated Private Server","Custom AI SOP per Divisi","On-site Implementation","SLA 99.9% Uptime"]},
-        {"key":"ULTRA","name":"V-ULTRA","badge_cls":"badge-ultra","badge_txt":"Executive","focus":"White-Label & 10 Elite AI Squad aktif penuh","price":"Custom Quote","period":"Harga khusus korporasi","setup":"Konsultasi strategis gratis","popular":False,"ultra":True,"plug_play":False,"features":["Seluruh ekosistem V-ELITE","White-Label Platform","Executive BI Dashboard C-Level","10 Elite AI Squad serentak","Dedicated AI Strategist","V-Guard ERP Liaison Protocol"]},
+        {"key":"LITE","name":"V-LITE","badge_cls":"badge-entry","badge_txt":"Entry Level","focus":"Fondasi keamanan digital untuk usaha satu kasir","price":"Rp 150.000","period":"/ bulan","setup":"Setup: Rp 250.000","popular":False,"ultra":False,"plug_play":True,
+         "features":["Deteksi VOID & Cancel","Daily AI Summary via WhatsApp","Dashboard Web Real-Time","Laporan Kebocoran Otomatis","Support via WhatsApp"]},
+        {"key":"PRO","name":"V-PRO","badge_cls":"badge-pro","badge_txt":"Pro","focus":"Otomasi admin, stok, & audit bank tanpa input manual","price":"Rp 450.000","period":"/ bulan","setup":"Setup: Rp 750.000","popular":True,"ultra":False,"plug_play":True,
+         "features":["Semua fitur V-LITE","VCS Secure Integration","Bank Statement Audit Otomatis","Input Invoice via OCR","Laporan PDF Terjadwal","Support Prioritas 24/7"]},
+        {"key":"ADVANCE","name":"V-ADVANCE","badge_cls":"badge-adv","badge_txt":"Pengawas Aktif","focus":"Mata AI pengawas aktif — visual, stok & multi-cabang","price":"Rp 1.200.000","period":"/ bulan","setup":"Setup: Rp 3.500.000","popular":False,"ultra":False,"plug_play":False,
+         "features":["Semua fitur V-PRO","CCTV AI — Visual Cashier Audit","WhatsApp Fraud Alarm Instan","H-7 Auto Collection Reminder","Multi-Cabang Dashboard"]},
+        {"key":"ELITE","name":"V-ELITE","badge_cls":"badge-ent","badge_txt":"Korporasi","focus":"Kedaulatan data penuh — server privat & AI forensik","price":"Mulai Rp 3.500.000","period":"/ bulan","setup":"Setup: Rp 10.000.000","popular":False,"ultra":False,"plug_play":False,
+         "features":["Semua fitur V-ADVANCE","Deep Learning Forensik AI","Dedicated Private Server","Custom AI SOP per Divisi","On-site Implementation","SLA 99.9% Uptime"]},
+        {"key":"ULTRA","name":"V-ULTRA","badge_cls":"badge-ultra","badge_txt":"Executive","focus":"White-Label & 10 Elite AI Squad aktif penuh","price":"Custom Quote","period":"Harga khusus korporasi","setup":"Konsultasi strategis gratis","popular":False,"ultra":True,"plug_play":False,
+         "features":["Seluruh ekosistem V-ELITE","White-Label Platform","Executive BI Dashboard C-Level","10 Elite AI Squad serentak","Dedicated AI Strategist","V-Guard ERP Liaison Protocol"]},
     ]
 
     st.markdown("<div style='padding:28px 40px 0;'>", unsafe_allow_html=True)
@@ -1461,34 +1330,65 @@ elif menu == "Produk & Harga":
     for pkg in PACKAGES:
         feat_html = "".join(
             "<div class='pkg-feature" + ("-ultra" if pkg["ultra"] else "") + "'>"
-            "<span class='pkg-check" + ("-ultra" if pkg["ultra"] else "") + "'>✓</span>" + f + "</div>"
+            "<span class='pkg-check" + ("-ultra" if pkg["ultra"] else "") + "'>&#x2713;</span>" + f + "</div>"
             for f in pkg["features"]
         )
-        install_html = "<span class='install-pill install-pnp'>Plug &amp; Play</span>" if pkg["plug_play"] else "<span class='install-pill install-pro'>Teknisi Profesional</span>"
-        if pkg["popular"]:   label_html,card_cls = "<div class='hot-label'>TERLARIS</div>","pkg-card-popular"
-        elif pkg["ultra"]:   label_html,card_cls = "<div class='ultra-label'>EKSKLUSIF</div>","pkg-card-ultra"
-        else:                label_html,card_cls = "","pkg-card"
+        install_html = (
+            "<span class='install-pill install-pnp'>Plug &amp; Play</span>"
+            if pkg["plug_play"]
+            else "<span class='install-pill install-pro'>Teknisi Profesional</span>"
+        )
+        if pkg["popular"]:
+            label_html, card_cls = "<div class='hot-label'>TERLARIS</div>", "pkg-card-popular"
+        elif pkg["ultra"]:
+            label_html, card_cls = "<div class='ultra-label'>EKSKLUSIF</div>", "pkg-card-ultra"
+        else:
+            label_html, card_cls = "", "pkg-card"
+
         name_cls  = "pkg-name-ultra" if pkg["ultra"] else "pkg-name"
         price_cls = "pkg-price-ultra" if pkg["ultra"] else "pkg-price"
         pkg_key   = "V-" + pkg["key"]
         ord_link  = ORDER_LINKS.get(pkg_key, WA_LINK_KONSUL)
-        order_btn = "<a href='" + ord_link + "' target='_blank' style='display:block;margin-top:14px;padding:10px;text-align:center;background:linear-gradient(135deg,#0091ff,#00d4ff);color:#000;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;border-radius:6px;text-decoration:none;letter-spacing:.5px;'>Order Sekarang</a>"
+        order_btn = (
+            "<a href='" + ord_link + "' target='_blank' "
+            "style='display:block;margin-top:14px;padding:10px;text-align:center;"
+            "background:linear-gradient(135deg,#0091ff,#00d4ff);color:#000;"
+            "font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;"
+            "border-radius:6px;text-decoration:none;letter-spacing:.5px;'>Order Sekarang</a>"
+        )
         cards_html += (
-            "<div style='flex:1;min-width:0;padding-top:16px;'><div class='" + card_cls + "' style='height:100%;'>"
-            + label_html + "<span class='tier-badge " + pkg["badge_cls"] + "'>" + pkg["badge_txt"] + "</span>"
+            "<div style='flex:1;min-width:0;padding-top:16px;'>"
+            "<div class='" + card_cls + "' style='height:100%;'>"
+            + label_html
+            + "<span class='tier-badge " + pkg["badge_cls"] + "'>" + pkg["badge_txt"] + "</span>"
             + "<div class='" + name_cls + "'>" + pkg["name"] + "</div>"
             + "<div class='pkg-focus'>" + pkg["focus"] + "</div>"
             + "<hr class='pkg-divider'>"
             + "<div class='" + price_cls + "'>" + pkg["price"] + "</div>"
             + "<div class='pkg-period'>" + pkg["period"] + "</div>"
             + "<div class='pkg-setup'>" + pkg["setup"] + "</div>"
-            + install_html + "<hr class='pkg-divider'>"
+            + install_html
+            + "<hr class='pkg-divider'>"
             + "<div class='pkg-features-grow'>" + feat_html + "</div>"
-            + order_btn + "</div></div>"
+            + order_btn
+            + "</div></div>"
         )
-    st.markdown("<div style='display:flex;flex-direction:row;gap:12px;align-items:stretch;width:100%;margin-bottom:24px;'>" + cards_html + "</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        "<div style='display:flex;flex-direction:row;gap:12px;align-items:stretch;width:100%;margin-bottom:24px;'>"
+        + cards_html + "</div>",
+        unsafe_allow_html=True
+    )
     st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("<div style='padding:0 48px 16px;'><div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:14px 20px;font-size:12px;color:#7a9bbf;line-height:1.8;'><b style='color:#00e676;'>Plug &amp; Play (V-LITE &amp; V-PRO):</b> Setup mandiri, tanpa teknisi, langsung aktif dalam hitungan menit.&nbsp;&nbsp;<b style='color:#ffab00;'>Teknisi Profesional (V-ADVANCE ke atas):</b> Integrasi khusus oleh teknisi V-Guard di lokasi bisnis Anda.</div></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div style='padding:0 48px 16px;'>"
+        "<div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:14px 20px;"
+        "font-size:12px;color:#7a9bbf;line-height:1.8;'>"
+        "<b style='color:#00e676;'>Plug &amp; Play (V-LITE &amp; V-PRO):</b> Setup mandiri, tanpa teknisi, langsung aktif dalam hitungan menit."
+        "&nbsp;&nbsp;<b style='color:#ffab00;'>Teknisi Profesional (V-ADVANCE ke atas):</b> Integrasi khusus oleh teknisi V-Guard di lokasi bisnis Anda."
+        "</div></div>",
+        unsafe_allow_html=True
+    )
     st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
     _,ctm,_ = st.columns([1.5,1,1.5])
     with ctm: st.link_button("Konsultasi Paket via WhatsApp", WA_LINK_KONSUL, use_container_width=True)
@@ -1511,62 +1411,61 @@ elif menu == "Kalkulator ROI":
         st.markdown("<div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:24px;'>", unsafe_allow_html=True)
         st.markdown("<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#00d4ff;margin-bottom:16px;'>Input Data Bisnis</div>", unsafe_allow_html=True)
 
-        jenis_usaha = st.selectbox("Jenis Usaha", ["Warung / 1 Kasir", "Toko Ritel / Cafe", "Minimarket", "Multi-Cabang", "Korporasi"], key="roi_jenis")
-        omzet_input = st.number_input("Omzet Bulanan (Rp)", min_value=0, value=50_000_000, step=5_000_000, key="roi_omzet")
-        jml_kasir   = st.number_input("Jumlah Kasir", min_value=1, value=2, step=1, key="roi_kasir")
-        jml_cabang  = st.number_input("Jumlah Cabang / Outlet", min_value=1, value=1, step=1, key="roi_cabang")
+        jenis_usaha   = st.selectbox("Jenis Usaha", ["Warung / 1 Kasir", "Toko Ritel / Cafe", "Minimarket", "Multi-Cabang", "Korporasi"], key="roi_jenis")
+        omzet_input   = st.number_input("Omzet Bulanan (Rp)", min_value=0, value=50_000_000, step=5_000_000, key="roi_omzet")
+        jml_kasir     = st.number_input("Jumlah Kasir", min_value=1, value=2, step=1, key="roi_kasir")
+        jml_cabang    = st.number_input("Jumlah Cabang / Outlet", min_value=1, value=1, step=1, key="roi_cabang")
         kebocoran_pct = st.slider("Estimasi Kebocoran Saat Ini (%)", 1, 20, 5, key="roi_bocor")
 
-        if jenis_usaha == "Warung / 1 Kasir": auto_pkg = "V-LITE"
-        elif jenis_usaha == "Toko Ritel / Cafe": auto_pkg = "V-PRO"
-        elif jenis_usaha == "Minimarket": auto_pkg = "V-PRO"
-        elif jenis_usaha == "Multi-Cabang": auto_pkg = "V-ADVANCE"
-        else: auto_pkg = "V-ELITE"
+        if jenis_usaha == "Warung / 1 Kasir":          auto_pkg = "V-LITE"
+        elif jenis_usaha in ("Toko Ritel / Cafe","Minimarket"): auto_pkg = "V-PRO"
+        elif jenis_usaha == "Multi-Cabang":             auto_pkg = "V-ADVANCE"
+        else:                                           auto_pkg = "V-ELITE"
 
-        paket_dipilih = st.selectbox("Paket Yang Ingin Dievaluasi", ["V-LITE","V-PRO","V-ADVANCE","V-ELITE"], index=["V-LITE","V-PRO","V-ADVANCE","V-ELITE"].index(auto_pkg) if auto_pkg in ["V-LITE","V-PRO","V-ADVANCE","V-ELITE"] else 1, key="roi_paket")
+        pkg_options = ["V-LITE","V-PRO","V-ADVANCE","V-ELITE"]
+        paket_dipilih = st.selectbox("Paket Yang Ingin Dievaluasi", pkg_options,
+                                     index=pkg_options.index(auto_pkg) if auto_pkg in pkg_options else 1,
+                                     key="roi_paket")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col_result:
-        biaya_paket = HARGA_NUMERIK.get(paket_dipilih, 450_000)
-        bocor_rp    = omzet_input * (kebocoran_pct / 100)
+        biaya_paket  = HARGA_NUMERIK.get(paket_dipilih, 450_000)
+        bocor_rp     = omzet_input * (kebocoran_pct / 100)
         diselamatkan = bocor_rp * 0.88
-        biaya_total  = biaya_paket
-        net_saved    = diselamatkan - biaya_total
-        roi_pct      = (net_saved / biaya_total * 100) if biaya_total > 0 else 0
-        payback_hari = (biaya_total / diselamatkan * 30) if diselamatkan > 0 else 0
+        net_saved    = diselamatkan - biaya_paket
+        roi_pct      = (net_saved / biaya_paket * 100) if biaya_paket > 0 else 0
+        payback_hari = (biaya_paket / diselamatkan * 30) if diselamatkan > 0 else 0
         hb, hs       = HARGA_MAP.get(paket_dipilih, ("—","—"))
 
-        st.markdown(f"""
-        <div style='background:linear-gradient(135deg,#0d1626,#101c2e);border:1px solid #1e3352;border-radius:12px;padding:24px;margin-bottom:16px;'>
-            <div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#00d4ff;margin-bottom:20px;'>Hasil Kalkulasi — {paket_dipilih}</div>
-            <div style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;'>
-                <div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:16px;text-align:center;'>
-                    <div style='font-size:11px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>Kebocoran/Bulan</div>
-                    <div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#ff3b5c;'>Rp {bocor_rp:,.0f}</div>
-                </div>
-                <div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:16px;text-align:center;'>
-                    <div style='font-size:11px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>Diselamatkan (88%)</div>
-                    <div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00e676;'>Rp {diselamatkan:,.0f}</div>
-                </div>
-                <div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:16px;text-align:center;'>
-                    <div style='font-size:11px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>Biaya Paket/Bulan</div>
-                    <div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#ffab00;'>{hb}</div>
-                </div>
-                <div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:16px;text-align:center;'>
-                    <div style='font-size:11px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>Net Saving/Bulan</div>
-                    <div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>Rp {net_saved:,.0f}</div>
-                </div>
-            </div>
-            <div style='background:linear-gradient(135deg,#00e67611,#00d4ff11);border:1px solid #00e67633;border-radius:10px;padding:20px;text-align:center;'>
-                <div style='font-size:12px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>ROI Bulanan Estimasi</div>
-                <div style='font-family:Rajdhani,sans-serif;font-size:56px;font-weight:700;background:linear-gradient(135deg,#00e676,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;'>{roi_pct:.0f}%</div>
-                <div style='font-size:12px;color:#7a9bbf;'>Payback Period: ±{payback_hari:.0f} hari</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(
+            "<div style='background:linear-gradient(135deg,#0d1626,#101c2e);border:1px solid #1e3352;"
+            "border-radius:12px;padding:24px;margin-bottom:16px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#00d4ff;"
+            "margin-bottom:20px;'>Hasil Kalkulasi — " + paket_dipilih + "</div>"
+            "<div style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;'>"
+            "<div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:16px;text-align:center;'>"
+            "<div style='font-size:11px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>Kebocoran/Bulan</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#ff3b5c;'>Rp {:,.0f}</div></div>".format(bocor_rp) +
+            "<div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:16px;text-align:center;'>"
+            "<div style='font-size:11px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>Diselamatkan (88%)</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00e676;'>Rp {:,.0f}</div></div>".format(diselamatkan) +
+            "<div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:16px;text-align:center;'>"
+            "<div style='font-size:11px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>Biaya Paket/Bulan</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#ffab00;'>" + hb + "</div></div>"
+            "<div style='background:#060b14;border:1px solid #1e3352;border-radius:8px;padding:16px;text-align:center;'>"
+            "<div style='font-size:11px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>Net Saving/Bulan</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00d4ff;'>Rp {:,.0f}</div></div></div>".format(net_saved) +
+            "<div style='background:linear-gradient(135deg,#00e67611,#00d4ff11);border:1px solid #00e67633;"
+            "border-radius:10px;padding:20px;text-align:center;'>"
+            "<div style='font-size:12px;color:#7a9bbf;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;'>ROI Bulanan Estimasi</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:56px;font-weight:700;"
+            "background:linear-gradient(135deg,#00e676,#00d4ff);-webkit-background-clip:text;"
+            "-webkit-text-fill-color:transparent;'>{:.0f}%</div>".format(roi_pct) +
+            "<div style='font-size:12px;color:#7a9bbf;'>Payback Period: ±{:.0f} hari</div></div></div>".format(payback_hari),
+            unsafe_allow_html=True
+        )
         ord_link = ORDER_LINKS.get(paket_dipilih, WA_LINK_KONSUL)
-        st.link_button(f"Order {paket_dipilih} — {hb}/bln", ord_link, use_container_width=True)
+        st.link_button("Order " + paket_dipilih + " — " + hb + "/bln", ord_link, use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
@@ -1583,115 +1482,121 @@ elif menu == "Portal Klien":
     )
 
     if st.session_state.client_logged_in and st.session_state.client_data:
-        klien = st.session_state.client_data
-        cid   = klien.get("Client_ID","—")
-        pkg   = klien.get("Produk","V-LITE")
+        klien  = st.session_state.client_data
+        cid    = klien.get("Client_ID","—")
+        pkg    = klien.get("Produk","V-LITE")
         status = klien.get("Status","Menunggu Pembayaran")
         hb, hs = HARGA_MAP.get(pkg, ("—","—"))
 
-        st.markdown(f"""
-        <div style='background:linear-gradient(135deg,#060b14,#0a1628);border:1px solid #1e3352;border-radius:14px;padding:24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;'>
-            <div>
-                <div style='font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;color:#e8f4ff;'>Selamat datang, {klien.get("Nama Klien","Klien")} 👋</div>
-                <div style='font-family:JetBrains Mono,monospace;font-size:11px;color:#00d4ff;margin-top:4px;'>{cid} · {pkg} · {"🟢 AKTIF" if status == "Aktif" else "🟡 Menunggu Aktivasi"}</div>
-            </div>
-            <div style='text-align:right;'>
-                <div style='font-size:12px;color:#7a9bbf;'>Paket</div>
-                <div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#00d4ff;'>{pkg}</div>
-                <div style='font-size:11px;color:#7a9bbf;'>{hb}/bln</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        status_label = "🟢 AKTIF" if status == "Aktif" else "🟡 Menunggu Aktivasi"
+        st.markdown(
+            "<div style='background:linear-gradient(135deg,#060b14,#0a1628);border:1px solid #1e3352;"
+            "border-radius:14px;padding:24px;margin-bottom:24px;display:flex;"
+            "justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;'>"
+            "<div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;color:#e8f4ff;'>"
+            "Selamat datang, " + klien.get("Nama Klien","Klien") + " 👋</div>"
+            "<div style='font-family:JetBrains Mono,monospace;font-size:11px;color:#00d4ff;margin-top:4px;'>"
+            + cid + " · " + pkg + " · " + status_label + "</div></div>"
+            "<div style='text-align:right;'>"
+            "<div style='font-size:12px;color:#7a9bbf;'>Paket</div>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#00d4ff;'>" + pkg + "</div>"
+            "<div style='font-size:11px;color:#7a9bbf;'>" + hb + "/bln</div></div></div>",
+            unsafe_allow_html=True
+        )
 
-        # Referral announcement banner
         ref_link = buat_referral_link(cid)
-        st.markdown(f"""
-        <div style='background:linear-gradient(135deg,#ffd70011,#ffab0011);border:1px solid #ffd70033;border-left:3px solid #ffd700;border-radius:10px;padding:14px 20px;margin-bottom:20px;'>
-            <div style='font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#ffd700;margin-bottom:4px;'>🎉 Dapatkan Komisi Penjualan 10%!</div>
-            <div style='font-size:13px;color:#9ab8d4;'>Referensikan rekan bisnis Anda menggunakan link referral unik Anda dan dapatkan <strong style="color:#ffd700;">komisi 10% dari biaya setup</strong> untuk setiap klien baru yang berhasil bergabung.</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            "<div style='background:linear-gradient(135deg,#ffd70011,#ffab0011);border:1px solid #ffd70033;"
+            "border-left:3px solid #ffd700;border-radius:10px;padding:14px 20px;margin-bottom:20px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#ffd700;margin-bottom:4px;'>"
+            "🎉 Dapatkan Komisi Penjualan 10%!</div>"
+            "<div style='font-size:13px;color:#9ab8d4;'>Referensikan rekan bisnis Anda menggunakan link referral unik Anda dan dapatkan "
+            "<strong style='color:#ffd700;'>komisi 10% dari biaya setup</strong> untuk setiap klien baru yang berhasil bergabung.</div></div>",
+            unsafe_allow_html=True
+        )
 
         portal_tabs = st.tabs(["📋 Akun Saya", "🔗 Referral & Komisi", "📊 Dashboard", "📁 Dokumen"])
 
         with portal_tabs[0]:
             c1, c2 = st.columns(2)
             with c1:
-                st.markdown(f"""
-                <div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:20px;'>
-                    <div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#00d4ff;margin-bottom:16px;'>Informasi Akun</div>
-                    <div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>Nama:</b> {klien.get("Nama Klien","—")}</div>
-                    <div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>Usaha:</b> {klien.get("Nama Usaha","—")}</div>
-                    <div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>WhatsApp:</b> {klien.get("WhatsApp","—")}</div>
-                    <div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>Paket:</b> {pkg}</div>
-                    <div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>Status:</b> <span style='color:{"#00e676" if status=="Aktif" else "#ffab00"};'>{status}</span></div>
-                    <div style='font-size:13px;color:#7a9bbf;'><b style='color:#e8f4ff;'>Client ID:</b> <span style='font-family:JetBrains Mono,monospace;color:#00d4ff;'>{cid}</span></div>
-                </div>
-                """, unsafe_allow_html=True)
+                status_color = "#00e676" if status == "Aktif" else "#ffab00"
+                st.markdown(
+                    "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:20px;'>"
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#00d4ff;margin-bottom:16px;'>Informasi Akun</div>"
+                    "<div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>Nama:</b> " + klien.get("Nama Klien","—") + "</div>"
+                    "<div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>Usaha:</b> " + klien.get("Nama Usaha","—") + "</div>"
+                    "<div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>WhatsApp:</b> " + klien.get("WhatsApp","—") + "</div>"
+                    "<div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>Paket:</b> " + pkg + "</div>"
+                    "<div style='font-size:13px;color:#7a9bbf;margin-bottom:8px;'><b style='color:#e8f4ff;'>Status:</b> "
+                    "<span style='color:" + status_color + ";'>" + status + "</span></div>"
+                    "<div style='font-size:13px;color:#7a9bbf;'><b style='color:#e8f4ff;'>Client ID:</b> "
+                    "<span style='font-family:JetBrains Mono,monospace;color:#00d4ff;'>" + cid + "</span></div></div>",
+                    unsafe_allow_html=True
+                )
             with c2:
                 if status == "Aktif":
-                    st.markdown("""
-                    <div style='background:#00e67611;border:1px solid #00e67633;border-radius:12px;padding:20px;margin-bottom:12px;'>
-                        <div style='font-size:12px;color:#00e676;font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;'>✅ Akun Aktif</div>
-                        <div style='font-size:13px;color:#7a9bbf;'>Sistem V-Guard AI aktif mengawasi bisnis Anda 24/7.</div>
-                        <div style='margin-top:12px;font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00e676;'>Live</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(
+                        "<div style='background:#00e67611;border:1px solid #00e67633;border-radius:12px;padding:20px;margin-bottom:12px;'>"
+                        "<div style='font-size:12px;color:#00e676;font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;'>✅ Akun Aktif</div>"
+                        "<div style='font-size:13px;color:#7a9bbf;'>Sistem V-Guard AI aktif mengawasi bisnis Anda 24/7.</div>"
+                        "<div style='margin-top:12px;font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#00e676;'>Live</div></div>",
+                        unsafe_allow_html=True
+                    )
                 else:
                     pay_link = buat_payment_link(pkg, klien.get("Nama Klien","Klien"))
-                    st.markdown("""
-                    <div style='background:#ffab0011;border:1px solid #ffab0033;border-radius:12px;padding:20px;margin-bottom:12px;'>
-                        <div style='font-size:12px;color:#ffab00;font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;'>⏳ Menunggu Aktivasi</div>
-                        <div style='font-size:13px;color:#7a9bbf;margin-bottom:12px;'>Selesaikan pembayaran untuk mengaktifkan akun Anda.</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(
+                        "<div style='background:#ffab0011;border:1px solid #ffab0033;border-radius:12px;padding:20px;margin-bottom:12px;'>"
+                        "<div style='font-size:12px;color:#ffab00;font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;'>⏳ Menunggu Aktivasi</div>"
+                        "<div style='font-size:13px;color:#7a9bbf;margin-bottom:12px;'>Selesaikan pembayaran untuk mengaktifkan akun Anda.</div></div>",
+                        unsafe_allow_html=True
+                    )
                     st.link_button("📲 Bayar via WhatsApp", pay_link, use_container_width=True)
 
         with portal_tabs[1]:
-            st.markdown(f"""
-            <div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:24px;margin-bottom:16px;'>
-                <div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#ffd700;margin-bottom:8px;'>🔗 Link Referral Unik Anda</div>
-                <div style='font-size:13px;color:#7a9bbf;margin-bottom:16px;'>Bagikan link ini ke rekan bisnis Anda. Setiap referral yang berhasil aktivasi, Anda mendapatkan <strong style="color:#ffd700;">komisi 10% dari biaya setup</strong>!</div>
-                <div class='ref-link-box'>{ref_link}</div>
-                <div style='margin-top:12px;font-size:12px;color:#7a9bbf;'>
-                    💰 <b>Contoh komisi:</b> Referral masuk paket V-PRO (setup Rp 750.000) → Anda dapat <b style="color:#ffd700;">Rp 75.000</b><br>
-                    💰 V-ADVANCE (setup Rp 3.500.000) → Komisi <b style="color:#ffd700;">Rp 350.000</b><br>
-                    💰 V-ELITE (setup Rp 10.000.000) → Komisi <b style="color:#ffd700;">Rp 1.000.000</b>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            wa_share = "https://wa.me/?text=" + urllib.parse.quote(
-                f"Halo! Saya sudah pakai V-Guard AI untuk keamanan bisnis saya — hasilnya luar biasa!\n\n"
-                f"Sistem AI ini otomatis deteksi fraud kasir, pantau stok, & audit rekening bank 24/7.\n\n"
-                f"Coba daftar di sini (link khusus saya): {ref_link}"
+            st.markdown(
+                "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:24px;margin-bottom:16px;'>"
+                "<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#ffd700;margin-bottom:8px;'>🔗 Link Referral Unik Anda</div>"
+                "<div style='font-size:13px;color:#7a9bbf;margin-bottom:16px;'>Bagikan link ini ke rekan bisnis Anda. Setiap referral yang berhasil aktivasi, Anda mendapatkan "
+                "<strong style='color:#ffd700;'>komisi 10% dari biaya setup</strong>!</div>"
+                "<div class='ref-link-box'>" + ref_link + "</div>"
+                "<div style='margin-top:12px;font-size:12px;color:#7a9bbf;'>"
+                "💰 <b>Contoh komisi:</b> Referral masuk paket V-PRO (setup Rp 750.000) → Anda dapat <b style='color:#ffd700;'>Rp 75.000</b><br>"
+                "💰 V-ADVANCE (setup Rp 3.500.000) → Komisi <b style='color:#ffd700;'>Rp 350.000</b><br>"
+                "💰 V-ELITE (setup Rp 10.000.000) → Komisi <b style='color:#ffd700;'>Rp 1.000.000</b></div></div>",
+                unsafe_allow_html=True
             )
-            st.link_button("📲 Bagikan via WhatsApp", wa_share, use_container_width=True)
 
-            # Show user's referral results
+            wa_share_txt = urllib.parse.quote(
+                "Halo! Saya sudah pakai V-Guard AI untuk keamanan bisnis saya — hasilnya luar biasa!\n\n"
+                "Sistem AI ini otomatis deteksi fraud kasir, pantau stok, & audit rekening bank 24/7.\n\n"
+                "Coba daftar di sini (link khusus saya): " + ref_link
+            )
+            st.link_button("📲 Bagikan via WhatsApp", "https://wa.me/?text=" + wa_share_txt, use_container_width=True)
+
             my_refs = [r for r in st.session_state.db_referrals if r.get("ref_cid") == cid]
             if my_refs:
                 st.markdown("<div style='margin-top:20px;font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#e8f4ff;margin-bottom:12px;'>📊 Referral Saya</div>", unsafe_allow_html=True)
                 total_komisi = sum(r.get("komisi_10pct",0) for r in my_refs)
-                komisi_terbayar = sum(r.get("komisi_10pct",0) for r in my_refs if r.get("status")=="Terbayar")
                 rc1, rc2 = st.columns(2)
                 rc1.metric("Total Referral", len(my_refs))
-                rc2.metric("Total Komisi", f"Rp {total_komisi:,.0f}")
+                rc2.metric("Total Komisi", "Rp {:,.0f}".format(total_komisi))
                 for r in my_refs:
                     badge_cls = "ref-badge-paid" if r.get("status")=="Terbayar" else "ref-badge-pending"
                     card_cls  = "ref-card ref-card-paid" if r.get("status")=="Terbayar" else "ref-card"
-                    st.markdown(f"""
-                    <div class='{card_cls}'>
-                        <div style='display:flex;justify-content:space-between;align-items:flex-start;'>
-                            <div>
-                                <div style='font-size:14px;color:#e8f4ff;font-weight:500;'>{r.get("new_client","—")} — {r.get("new_usaha","—")}</div>
-                                <div style='font-size:12px;color:#7a9bbf;'>{r.get("paket","—")} · Setup: Rp {r.get("setup_fee",0):,.0f} · Komisi: <b style="color:#ffd700;">Rp {r.get("komisi_10pct",0):,.0f}</b></div>
-                                <div style='font-size:11px;color:#4a6a8a;margin-top:2px;'>{r.get("tanggal","—")}</div>
-                            </div>
-                            <span class='{badge_cls}'>{r.get("status","—")}</span>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(
+                        "<div class='" + card_cls + "'>"
+                        "<div style='display:flex;justify-content:space-between;align-items:flex-start;'>"
+                        "<div>"
+                        "<div style='font-size:14px;color:#e8f4ff;font-weight:500;'>" + r.get("new_client","—") + " — " + r.get("new_usaha","—") + "</div>"
+                        "<div style='font-size:12px;color:#7a9bbf;'>" + r.get("paket","—") + " · Setup: Rp {:,.0f} · Komisi: <b style='color:#ffd700;'>Rp {:,.0f}</b></div>".format(r.get("setup_fee",0), r.get("komisi_10pct",0)) +
+                        "<div style='font-size:11px;color:#4a6a8a;margin-top:2px;'>" + r.get("tanggal","—") + "</div>"
+                        "</div>"
+                        "<span class='" + badge_cls + "'>" + r.get("status","—") + "</span>"
+                        "</div></div>",
+                        unsafe_allow_html=True
+                    )
             else:
                 st.info("Belum ada referral yang masuk. Mulai bagikan link Anda sekarang!")
 
@@ -1715,17 +1620,17 @@ elif menu == "Portal Klien":
                     st.dataframe(df_sample[["ID_Transaksi","Kasir","Jumlah","Status","Waktu"]].head(6), use_container_width=True, hide_index=True)
                 if pkg in ("V-PRO","V-ADVANCE","V-ELITE","V-ULTRA"):
                     st.markdown("#### 📹 Monitor CCTV")
-                    st.markdown("""
-                    <div class='cctv-frame' style='max-width:480px;'>
-                        <div style='text-align:center;color:#1e3352;'>
-                            <div style='font-size:48px;margin-bottom:8px;'>📹</div>
-                            <div style='font-size:13px;font-family:JetBrains Mono,monospace;'>CCTV Feed — Tersedia setelah hardware terpasang</div>
-                            <div style='font-size:11px;color:#7a9bbf;margin-top:4px;'>Hubungi teknisi V-Guard untuk integrasi</div>
-                        </div>
-                        <div class='cctv-overlay'>● REC 04:22:18</div>
-                        <div class='cctv-alert'>⚠ WAITING FEED</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    now_str = datetime.datetime.now().strftime("%H:%M:%S")
+                    st.markdown(
+                        "<div class='cctv-frame' style='max-width:480px;'>"
+                        "<div style='text-align:center;color:#1e3352;'>"
+                        "<div style='font-size:48px;margin-bottom:8px;'>📹</div>"
+                        "<div style='font-size:13px;font-family:JetBrains Mono,monospace;'>CCTV Feed — Tersedia setelah hardware terpasang</div>"
+                        "<div style='font-size:11px;color:#7a9bbf;margin-top:4px;'>Hubungi teknisi V-Guard untuk integrasi</div></div>"
+                        "<div class='cctv-overlay'>● REC " + now_str + "</div>"
+                        "<div class='cctv-alert'>⚠ WAITING FEED</div></div>",
+                        unsafe_allow_html=True
+                    )
             else:
                 st.info("Dashboard akan tersedia setelah akun Anda diaktifkan.")
 
@@ -1733,14 +1638,25 @@ elif menu == "Portal Klien":
             st.markdown("<div style='font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#e8f4ff;margin-bottom:16px;'>📁 Folder Dokumen</div>", unsafe_allow_html=True)
             docs = [
                 ("📋", "Kontrak Langganan", "Dokumen perjanjian layanan V-Guard AI", "Tersedia"),
-                ("🧾", "Invoice Terakhir", f"Invoice {datetime.date.today().strftime('%B %Y')}", "PDF"),
+                ("🧾", "Invoice Terakhir", "Invoice " + datetime.date.today().strftime("%B %Y"), "PDF"),
                 ("📘", "Panduan Onboarding", "Langkah aktivasi & setup sistem", "Tersedia"),
                 ("🔒", "Kebijakan Privasi Data", "SLA & data privacy agreement", "Tersedia"),
-                ("📊", "Laporan Bulanan", f"Laporan AI {datetime.date.today().strftime('%B %Y')}", "Dalam Proses" if status != "Aktif" else "PDF"),
+                ("📊", "Laporan Bulanan", "Laporan AI " + datetime.date.today().strftime("%B %Y"), "Dalam Proses" if status != "Aktif" else "PDF"),
             ]
             for icon, name, desc, badge in docs:
                 badge_color = "#00e676" if badge in ("Tersedia","PDF") else "#ffab00"
-                st.markdown(f"<div style='background:#101c2e;border:1px solid #1e3352;border-radius:8px;padding:14px 18px;margin-bottom:8px;display:flex;align-items:center;gap:14px;'><span style='font-size:22px;'>{icon}</span><div style='flex:1;'><div style='font-size:14px;color:#e8f4ff;font-weight:500;'>{name}</div><div style='font-size:12px;color:#7a9bbf;'>{desc}</div></div><span style='font-family:JetBrains Mono,monospace;font-size:10px;color:{badge_color};border:1px solid {badge_color}44;background:{badge_color}11;padding:3px 10px;border-radius:20px;'>{badge}</span></div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:8px;padding:14px 18px;"
+                    "margin-bottom:8px;display:flex;align-items:center;gap:14px;'>"
+                    "<span style='font-size:22px;'>" + icon + "</span>"
+                    "<div style='flex:1;'>"
+                    "<div style='font-size:14px;color:#e8f4ff;font-weight:500;'>" + name + "</div>"
+                    "<div style='font-size:12px;color:#7a9bbf;'>" + desc + "</div></div>"
+                    "<span style='font-family:JetBrains Mono,monospace;font-size:10px;color:" + badge_color + ";"
+                    "border:1px solid " + badge_color + "44;background:" + badge_color + "11;"
+                    "padding:3px 10px;border-radius:20px;'>" + badge + "</span></div>",
+                    unsafe_allow_html=True
+                )
 
         st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
         if st.button("Logout Portal", key="portal_logout"):
@@ -1755,7 +1671,13 @@ elif menu == "Portal Klien":
             _,lc,_ = st.columns([1,1.2,1])
             with lc:
                 st.markdown("<div class='login-card'>", unsafe_allow_html=True)
-                st.markdown("<div style='text-align:center;margin-bottom:20px;'><div style='font-size:36px;'>🔑</div><div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#e8f4ff;'>Login Portal Klien</div><div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>Masukkan Client ID yang diberikan tim V-Guard</div></div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<div style='text-align:center;margin-bottom:20px;'>"
+                    "<div style='font-size:36px;'>🔑</div>"
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#e8f4ff;'>Login Portal Klien</div>"
+                    "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>Masukkan Client ID yang diberikan tim V-Guard</div></div>",
+                    unsafe_allow_html=True
+                )
                 cid_input = st.text_input("Client ID", placeholder="VG-XXXXXX", key="portal_cid")
                 if st.button("Masuk ke Portal", type="primary", use_container_width=True, key="btn_portal_login"):
                     found = None
@@ -1788,38 +1710,33 @@ elif menu == "Portal Klien":
                     paket_form = st.selectbox("Paket yang Diminati *", ["V-LITE","V-PRO","V-ADVANCE","V-ELITE","V-ULTRA"], key="form_paket")
                     catatan    = st.text_area("Ceritakan singkat bisnis Anda", placeholder="Toko kelontong 2 kasir, omzet ±20jt/bln...", height=80, key="form_catatan")
 
-                    # Show referral info if coming from referral link
                     ref_src = st.session_state.get("tracking_ref","")
                     if ref_src:
-                        st.markdown(f"""
-                        <div style='background:#ffd70011;border:1px solid #ffd70033;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#ffd700;'>
-                            🔗 Anda mendaftar melalui link referral: <b>{ref_src}</b>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        st.markdown(
+                            "<div style='background:#ffd70011;border:1px solid #ffd70033;border-radius:8px;"
+                            "padding:10px 14px;margin-bottom:12px;font-size:12px;color:#ffd700;'>"
+                            "🔗 Anda mendaftar melalui link referral: <b>" + ref_src + "</b></div>",
+                            unsafe_allow_html=True
+                        )
 
                     if st.button("Kirim Pengajuan", type="primary", use_container_width=True, key="btn_submit_form"):
                         if nama_klien and nama_usaha and wa_klien:
                             cid_baru = buat_client_id(nama_klien, wa_klien)
                             pengajuan = {
-                                "Client_ID": cid_baru,
-                                "Nama Klien": nama_klien,
-                                "Nama Usaha": nama_usaha,
-                                "WhatsApp": wa_klien,
-                                "Produk": paket_form,
-                                "Status": "Menunggu Pembayaran",
-                                "Catatan": catatan,
-                                "Tanggal": str(datetime.date.today()),
-                                "Source": "Portal Klien",
-                                "Ref": ref_src,
+                                "Client_ID": cid_baru, "Nama Klien": nama_klien,
+                                "Nama Usaha": nama_usaha, "WhatsApp": wa_klien,
+                                "Produk": paket_form, "Status": "Menunggu Pembayaran",
+                                "Catatan": catatan, "Tanggal": str(datetime.date.today()),
+                                "Source": "Portal Klien", "Ref": ref_src,
                             }
                             st.session_state.db_umum.append(pengajuan)
                             st.session_state.db_pengajuan.append(pengajuan)
-                            # Track referral commission if came from ref link
                             if ref_src:
-                                setup_fee = {
-                                    "V-LITE": 250_000, "V-PRO": 750_000, "V-ADVANCE": 3_500_000,
-                                    "V-ELITE": 10_000_000, "V-ULTRA": 0
-                                }.get(paket_form, 0)
+                                setup_fee_map = {
+                                    "V-LITE": 250_000, "V-PRO": 750_000,
+                                    "V-ADVANCE": 3_500_000, "V-ELITE": 10_000_000, "V-ULTRA": 0
+                                }
+                                setup_fee = setup_fee_map.get(paket_form, 0)
                                 if setup_fee > 0:
                                     track_referral(ref_src, pengajuan, setup_fee)
                             st.session_state.portal_form_submitted = True
@@ -1832,7 +1749,7 @@ elif menu == "Portal Klien":
     st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
 
 # =============================================================================
-# 19. PAGE: INVESTOR AREA  (private — only shown when authenticated)
+# 19. PAGE: INVESTOR AREA
 # =============================================================================
 elif menu == "Investor Area":
     if not st.session_state.authenticated:
@@ -1846,13 +1763,15 @@ elif menu == "Investor Area":
         unsafe_allow_html=True,
     )
 
-    st.markdown("""
-    <div style='background:linear-gradient(135deg,#0d1626,#1a1500);border:1px solid #ffd70033;border-radius:14px;padding:24px;margin-bottom:24px;'>
-        <div style='font-family:JetBrains Mono,monospace;font-size:10px;color:#ffd700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;'>CONFIDENTIAL — INVESTOR BRIEF</div>
-        <div style='font-family:Rajdhani,sans-serif;font-size:28px;font-weight:700;color:#ffd700;margin-bottom:4px;'>V-Guard AI Intelligence</div>
-        <div style='font-size:14px;color:#7a9bbf;'>AI-Powered Business Security Ecosystem · Indonesia Market</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        "<div style='background:linear-gradient(135deg,#0d1626,#1a1500);border:1px solid #ffd70033;"
+        "border-radius:14px;padding:24px;margin-bottom:24px;'>"
+        "<div style='font-family:JetBrains Mono,monospace;font-size:10px;color:#ffd700;letter-spacing:2px;"
+        "text-transform:uppercase;margin-bottom:8px;'>CONFIDENTIAL — INVESTOR BRIEF</div>"
+        "<div style='font-family:Rajdhani,sans-serif;font-size:28px;font-weight:700;color:#ffd700;margin-bottom:4px;'>V-Guard AI Intelligence</div>"
+        "<div style='font-size:14px;color:#7a9bbf;'>AI-Powered Business Security Ecosystem · Indonesia Market</div></div>",
+        unsafe_allow_html=True
+    )
 
     inv_stats = [
         ("TAM","Rp 4,2 Triliun","Total Addressable Market Indonesia"),
@@ -1865,7 +1784,13 @@ elif menu == "Investor Area":
     cols = st.columns(3)
     for i,(title,val,desc) in enumerate(inv_stats):
         with cols[i%3]:
-            st.markdown(f"<div class='investor-stat'><div class='investor-stat-num'>{val}</div><div style='font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#e8f4ff;margin-top:4px;'>{title}</div><div class='investor-stat-lbl'>{desc}</div></div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='investor-stat'>"
+                "<div class='investor-stat-num'>" + val + "</div>"
+                "<div style='font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#e8f4ff;margin-top:4px;'>" + title + "</div>"
+                "<div class='investor-stat-lbl'>" + desc + "</div></div>",
+                unsafe_allow_html=True
+            )
             st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
     st.divider()
@@ -1880,7 +1805,12 @@ elif menu == "Investor Area":
         }
         df_proj = pd.DataFrame(data_proj)
         st.dataframe(df_proj, use_container_width=True, hide_index=True)
-        st.markdown("""<div style='background:#101c2e;border:1px solid #1e3352;border-radius:8px;padding:14px 18px;margin-top:12px;font-size:12px;color:#7a9bbf;'>⚠️ Proyeksi berdasarkan asumsi pertumbuhan organik + digital marketing. Angka aktual dapat berbeda tergantung eksekusi dan kondisi pasar.</div>""", unsafe_allow_html=True)
+        st.markdown(
+            "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:8px;padding:14px 18px;"
+            "margin-top:12px;font-size:12px;color:#7a9bbf;'>⚠️ Proyeksi berdasarkan asumsi pertumbuhan organik + "
+            "digital marketing. Angka aktual dapat berbeda tergantung eksekusi dan kondisi pasar.</div>",
+            unsafe_allow_html=True
+        )
 
     with inv_tabs[1]:
         roadmap = [
@@ -1892,25 +1822,31 @@ elif menu == "Investor Area":
         ]
         for quarter, title, desc, status_r in roadmap:
             color = "#00e676" if status_r=="done" else "#00d4ff" if status_r=="active" else "#7a9bbf"
-            st.markdown(f"<div style='background:#101c2e;border:1px solid #1e3352;border-left:3px solid {color};border-radius:8px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:flex-start;gap:16px;'><div style='font-family:JetBrains Mono,monospace;font-size:11px;color:{color};min-width:60px;margin-top:2px;'>{quarter}</div><div><div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#e8f4ff;'>{title}</div><div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>{desc}</div></div></div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div style='background:#101c2e;border:1px solid #1e3352;border-left:3px solid " + color + ";"
+                "border-radius:8px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:flex-start;gap:16px;'>"
+                "<div style='font-family:JetBrains Mono,monospace;font-size:11px;color:" + color + ";min-width:60px;margin-top:2px;'>" + quarter + "</div>"
+                "<div><div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#e8f4ff;'>" + title + "</div>"
+                "<div style='font-size:13px;color:#7a9bbf;margin-top:4px;'>" + desc + "</div></div></div>",
+                unsafe_allow_html=True
+            )
 
     with inv_tabs[2]:
-        st.markdown("""
-        <div style='display:grid;grid-template-columns:1fr 1fr;gap:16px;'>
-            <div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:20px;'>
-                <div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#00d4ff;margin-bottom:12px;'>💰 Revenue Streams</div>
-                <div style='font-size:13px;color:#7a9bbf;line-height:1.8;'>
-                ● Langganan bulanan (SaaS MRR)<br>● Biaya setup & implementasi<br>● White-label licensing (V-ULTRA)<br>● Komisi referral program<br>● API usage fees (enterprise)
-                </div>
-            </div>
-            <div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:20px;'>
-                <div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#ffd700;margin-bottom:12px;'>🛡️ Keunggulan Kompetitif</div>
-                <div style='font-size:13px;color:#7a9bbf;line-height:1.8;'>
-                ● AI local-first (bahasa & konteks Indonesia)<br>● 5-tier pricing menjangkau semua segmen<br>● CCTV + Kasir + Bank dalam 1 platform<br>● Plug & Play — tidak butuh IT team<br>● WhatsApp-native alert system
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            "<div style='display:grid;grid-template-columns:1fr 1fr;gap:16px;'>"
+            "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:20px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#00d4ff;margin-bottom:12px;'>💰 Revenue Streams</div>"
+            "<div style='font-size:13px;color:#7a9bbf;line-height:1.8;'>"
+            "● Langganan bulanan (SaaS MRR)<br>● Biaya setup & implementasi<br>"
+            "● White-label licensing (V-ULTRA)<br>● Komisi referral program<br>● API usage fees (enterprise)</div></div>"
+            "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:12px;padding:20px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#ffd700;margin-bottom:12px;'>🛡️ Keunggulan Kompetitif</div>"
+            "<div style='font-size:13px;color:#7a9bbf;line-height:1.8;'>"
+            "● AI local-first (bahasa & konteks Indonesia)<br>● 5-tier pricing menjangkau semua segmen<br>"
+            "● CCTV + Kasir + Bank dalam 1 platform<br>● Plug & Play — tidak butuh IT team<br>"
+            "● WhatsApp-native alert system</div></div></div>",
+            unsafe_allow_html=True
+        )
 
     st.divider()
     st.link_button("📲 Jadwalkan Meeting dengan Founder", WA_LINK_KONSUL, use_container_width=False)
@@ -1923,7 +1859,7 @@ elif menu == "Investor Area":
     st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
 
 # =============================================================================
-# 20. PAGE: ADMIN ACCESS — WAR ROOM (private)
+# 20. PAGE: ADMIN ACCESS — WAR ROOM
 # =============================================================================
 elif menu == "Admin Access":
     if not st.session_state.authenticated or not st.session_state.admin_logged_in:
@@ -1970,9 +1906,9 @@ elif menu == "Admin Access":
         m1.metric("Total Klien", str(total_k))
         m2.metric("Klien Aktif", str(aktif_k))
         m3.metric("Pending", str(pending_k))
-        m4.metric("MRR", f"Rp {mrr:,.0f}")
+        m4.metric("MRR", "Rp {:,.0f}".format(mrr))
         m5.metric("Total Referral", str(total_ref))
-        m6.metric("Total Komisi", f"Rp {total_kom:,.0f}")
+        m6.metric("Total Komisi", "Rp {:,.0f}".format(total_kom))
 
         st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
         st.markdown("""
@@ -1981,14 +1917,14 @@ elif menu == "Admin Access":
                 <span class='demo-dot demo-red'></span><span class='demo-dot demo-yellow'></span><span class='demo-dot demo-green'></span>
                 <span style='margin-left:12px;color:#7a9bbf;font-size:11px;'>v-guard-warroom / system-log</span>
             </div>
-            <span style='color:#00e676;'>✓</span> [SYSTEM] V-Guard AI v2.1 — Boot selesai<br>
-            <span style='color:#00d4ff;'>▸</span> [SENTINEL] 10 AI Agents terdaftar · 8 Aktif · 2 Standby<br>
-            <span style='color:#00e676;'>✓</span> [LIAISON] Fraud scanner lokal aktif — filter anomali only<br>
-            <span style='color:#00d4ff;'>▸</span> [CONCIERGE] Chat widget aktif di semua halaman<br>
-            <span style='color:#ffab00;'>▸</span> [AUDITOR] Sinkronisasi mutasi bank — jadwal 06:00 WIB<br>
-            <span style='color:#00e676;'>✓</span> [WHISPERBOT] WhatsApp gateway — Connected<br>
-            <span style='color:#00d4ff;'>▸</span> [ORACLE] Predictive model last update: hari ini 02:00 WIB<br>
-            <span style='color:#ffd700;'>▸</span> [COLLECTOR] Auto-billing H-7 check — Aktif<br>
+            <span style='color:#00e676;'>&#x2713;</span> [SYSTEM] V-Guard AI v2.1 — Boot selesai<br>
+            <span style='color:#00d4ff;'>&#x25B8;</span> [SENTINEL] 10 AI Agents terdaftar · 8 Aktif · 2 Standby<br>
+            <span style='color:#00e676;'>&#x2713;</span> [LIAISON] Fraud scanner lokal aktif — filter anomali only<br>
+            <span style='color:#00d4ff;'>&#x25B8;</span> [CONCIERGE] Chat widget aktif di semua halaman<br>
+            <span style='color:#ffab00;'>&#x25B8;</span> [AUDITOR] Sinkronisasi mutasi bank — jadwal 06:00 WIB<br>
+            <span style='color:#00e676;'>&#x2713;</span> [WHISPERBOT] WhatsApp gateway — Connected<br>
+            <span style='color:#00d4ff;'>&#x25B8;</span> [ORACLE] Predictive model last update: hari ini 02:00 WIB<br>
+            <span style='color:#ffd700;'>&#x25B8;</span> [COLLECTOR] Auto-billing H-7 check — Aktif<br>
             <span style='color:#7a9bbf;'>_</span>
         </div>
         """, unsafe_allow_html=True)
@@ -1996,7 +1932,12 @@ elif menu == "Admin Access":
         dp_log = st.session_state.get("detected_package")
         if dp_log:
             bul,_ = HARGA_MAP.get(dp_log,("—","—"))
-            st.markdown("<div class='match-banner' style='margin-top:16px;'><div class='match-banner-title'>🎯 Paket Terdeteksi dari Sesi Chat CS</div><div class='match-banner-body'>Cocok: <b>" + dp_log + "</b> — " + bul + "/bln</div></div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='match-banner' style='margin-top:16px;'>"
+                "<div class='match-banner-title'>🎯 Paket Terdeteksi dari Sesi Chat CS</div>"
+                "<div class='match-banner-body'>Cocok: <b>" + dp_log + "</b> — " + bul + "/bln</div></div>",
+                unsafe_allow_html=True
+            )
 
     # ── TAB 1: AI AGENTS ──────────────────────────────────────────────
     with war_tabs[1]:
@@ -2018,23 +1959,27 @@ elif menu == "Admin Access":
                 label = label_map[st_code]
                 ks = st.session_state.agent_kill_switch.get(agent["id"], False)
                 with col:
-                    st.markdown(f"""
-                    <div class='agent-card agent-card-{"active" if not ks else "offline"}'>
-                        <div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;'>
-                            <div style='display:flex;align-items:center;gap:8px;'>
-                                <span style='font-size:22px;'>{agent['icon']}</span>
-                                <div>
-                                    <div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#e8f4ff;'>Agent #{agent['id']} · {agent['name']}</div>
-                                    <div style='font-size:11px;color:#7a9bbf;'>{agent['role']}</div>
-                                </div>
-                            </div>
-                            <span style='font-family:JetBrains Mono,monospace;font-size:9px;color:{"#ff3b5c" if ks else color};border:1px solid {"#ff3b5c44" if ks else color+"44"};background:{"#ff3b5c11" if ks else color+"11"};padding:2px 8px;border-radius:20px;'>{"KILLED" if ks else label}</span>
-                        </div>
-                        <div style='font-size:12px;color:#7a9bbf;line-height:1.5;'>{agent['desc']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    card_border = "agent-card-active" if not ks else "agent-card-offline"
+                    status_color = "#ff3b5c" if ks else color
+                    status_label_text = "KILLED" if ks else label
+                    st.markdown(
+                        "<div class='agent-card " + card_border + "'>"
+                        "<div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;'>"
+                        "<div style='display:flex;align-items:center;gap:8px;'>"
+                        "<span style='font-size:22px;'>" + agent['icon'] + "</span>"
+                        "<div>"
+                        "<div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#e8f4ff;'>"
+                        "Agent #" + str(agent['id']) + " · " + agent['name'] + "</div>"
+                        "<div style='font-size:11px;color:#7a9bbf;'>" + agent['role'] + "</div>"
+                        "</div></div>"
+                        "<span style='font-family:JetBrains Mono,monospace;font-size:9px;color:" + status_color + ";"
+                        "border:1px solid " + status_color + "44;background:" + status_color + "11;"
+                        "padding:2px 8px;border-radius:20px;'>" + status_label_text + "</span></div>"
+                        "<div style='font-size:12px;color:#7a9bbf;line-height:1.5;'>" + agent['desc'] + "</div></div>",
+                        unsafe_allow_html=True
+                    )
                     btn_label = "🔴 Kill Agent" if not ks else "🟢 Restart Agent"
-                    if st.button(btn_label, key=f"ks_{agent['id']}", use_container_width=True):
+                    if st.button(btn_label, key="ks_" + str(agent['id']), use_container_width=True):
                         st.session_state.agent_kill_switch[agent['id']] = not ks
                         st.rerun()
                     st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
@@ -2049,37 +1994,34 @@ elif menu == "Admin Access":
         for i, loc in enumerate(cam_locations):
             with cam_cols[i % 2]:
                 now_str = datetime.datetime.now().strftime("%H:%M:%S")
-                alert_show = i == 0
-                st.markdown(f"""
-                <div class='cctv-frame' style='margin-bottom:12px;'>
-                    <div style='text-align:center;'>
-                        <div style='font-size:32px;margin-bottom:6px;'>📹</div>
-                        <div style='font-family:JetBrains Mono,monospace;font-size:11px;color:#1e3352;'>{loc}</div>
-                        <div style='font-size:10px;color:#7a9bbf;margin-top:4px;'>Feed tersedia setelah hardware terpasang</div>
-                    </div>
-                    <div class='cctv-overlay'>● REC {now_str} · Cam {i+1}</div>
-                    {"<div class='cctv-alert'>⚠ VOID DETECTED</div>" if alert_show else '<div style="position:absolute;top:8px;right:8px;font-family:JetBrains Mono,monospace;font-size:10px;color:#00e676;background:#00000088;padding:4px 8px;border-radius:4px;">✓ NORMAL</div>'}
-                </div>
-                """, unsafe_allow_html=True)
+                alert_show = (i == 0)
+                alert_html = "<div class='cctv-alert'>⚠ VOID DETECTED</div>" if alert_show else \
+                    "<div style='position:absolute;top:8px;right:8px;font-family:JetBrains Mono,monospace;font-size:10px;color:#00e676;background:#00000088;padding:4px 8px;border-radius:4px;'>✓ NORMAL</div>"
+                st.markdown(
+                    "<div class='cctv-frame' style='margin-bottom:12px;'>"
+                    "<div style='text-align:center;'>"
+                    "<div style='font-size:32px;margin-bottom:6px;'>📹</div>"
+                    "<div style='font-family:JetBrains Mono,monospace;font-size:11px;color:#1e3352;'>" + loc + "</div>"
+                    "<div style='font-size:10px;color:#7a9bbf;margin-top:4px;'>Feed tersedia setelah hardware terpasang</div></div>"
+                    "<div class='cctv-overlay'>● REC " + now_str + " · Cam " + str(i+1) + "</div>"
+                    + alert_html + "</div>",
+                    unsafe_allow_html=True
+                )
 
         st.divider()
+        st.markdown(
+            "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:10px;padding:16px 20px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#00d4ff;margin-bottom:10px;'>VisualEye AI — YOLO Integration</div>"
+            "<div style='font-size:12px;color:#7a9bbf;line-height:1.8;'>"
+            "Model YOLO fine-tuned untuk deteksi:<br>"
+            "● <b style='color:#ff3b5c;'>unscanned_item</b> — barang tidak di-scan kasir<br>"
+            "● <b style='color:#ff3b5c;'>item_concealment</b> — barang disembunyikan<br>"
+            "● <b style='color:#ffab00;'>cash_swap</b> — penukaran uang mencurigakan<br>"
+            "● <b style='color:#ffab00;'>void_gesture</b> — gerakan void tidak wajar<br><br>"
+            "Integrasi: <code style='color:#00d4ff;'>process_yolo_cctv_frame()</code> tersedia di kode — hubungkan DVR CCTV via HTTP POST.</div></div>",
+            unsafe_allow_html=True
+        )
 
-        # YOLO integration info
-        st.markdown("""
-        <div style='background:#101c2e;border:1px solid #1e3352;border-radius:10px;padding:16px 20px;'>
-            <div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#00d4ff;margin-bottom:10px;'>VisualEye AI — YOLO Integration</div>
-            <div style='font-size:12px;color:#7a9bbf;line-height:1.8;'>
-                Model YOLO fine-tuned untuk deteksi:<br>
-                ● <b style='color:#ff3b5c;'>unscanned_item</b> — barang tidak di-scan kasir<br>
-                ● <b style='color:#ff3b5c;'>item_concealment</b> — barang disembunyikan<br>
-                ● <b style='color:#ffab00;'>cash_swap</b> — penukaran uang mencurigakan<br>
-                ● <b style='color:#ffab00;'>void_gesture</b> — gerakan void tidak wajar<br><br>
-                Integrasi: <code style='color:#00d4ff;'>process_yolo_cctv_frame()</code> tersedia di kode — hubungkan DVR CCTV via HTTP POST.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Simulate YOLO detection for demo
         if st.button("🤖 Simulasi Deteksi YOLO (Demo)", key="btn_yolo_demo"):
             demo_frame = {"camera_id": "cam_01", "timestamp": str(datetime.datetime.now())}
             result = process_yolo_cctv_frame(demo_frame)
@@ -2098,29 +2040,31 @@ elif menu == "Admin Access":
         fs2.metric("Duplikat Kasir", len(hasil["fraud"]),      delta="Terdeteksi"  if hasil["fraud"].shape[0] else "Aman")
         fs3.metric("Selisih Saldo",  len(hasil["suspicious"]), delta="Anomali"     if hasil["suspicious"].shape[0] else "Aman")
 
-        # AI Fraud Alarm: compare POS vs simulated YOLO
         st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
-        st.markdown("""
-        <div style='background:#ff3b5c11;border:1px solid #ff3b5c33;border-left:3px solid #ff3b5c;border-radius:8px;padding:12px 16px;margin-bottom:16px;'>
-            <div style='font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#ff3b5c;margin-bottom:4px;'>🤖 AI Fraud Alarm Engine</div>
-            <div style='font-size:12px;color:#7a9bbf;'>Komparasi data kasir POS dengan deteksi YOLO CCTV. Mismatch = alarm otomatis ke Owner.</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            "<div style='background:#ff3b5c11;border:1px solid #ff3b5c33;border-left:3px solid #ff3b5c;"
+            "border-radius:8px;padding:12px 16px;margin-bottom:16px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#ff3b5c;margin-bottom:4px;'>🤖 AI Fraud Alarm Engine</div>"
+            "<div style='font-size:12px;color:#7a9bbf;'>Komparasi data kasir POS dengan deteksi YOLO CCTV. Mismatch = alarm otomatis ke Owner.</div></div>",
+            unsafe_allow_html=True
+        )
+
         if st.button("⚡ Jalankan AI Fraud Alarm Check", key="btn_ai_alarm"):
-            yolo_results = [process_yolo_cctv_frame({"camera_id": f"cam_0{i+1}", "timestamp": str(datetime.datetime.now())}) for i in range(2)]
+            yolo_results = [process_yolo_cctv_frame({"camera_id": "cam_0" + str(i+1), "timestamp": str(datetime.datetime.now())}) for i in range(2)]
             alarms = check_ai_fraud_alarm(df_trx, yolo_results)
             if alarms:
-                st.error(f"⚠️ {len(alarms)} alarm fraud terdeteksi!")
+                st.error("⚠️ " + str(len(alarms)) + " alarm fraud terdeteksi!")
                 for alarm in alarms:
                     wa_alarm = trigger_alarm(alarm["reason"], alarm["kasir"], alarm["cabang"], alarm["jumlah"])
-                    st.markdown(f"""
-                    <div style='background:#ff3b5c11;border:1px solid #ff3b5c33;border-radius:8px;padding:12px 16px;margin-bottom:8px;'>
-                        <b style='color:#ff3b5c;'>⚠ ALARM</b><br>
-                        Kasir: {alarm['kasir']} · Cabang: {alarm['cabang']} · Jumlah: Rp {alarm['jumlah']:,.0f}<br>
-                        Alasan: {alarm['reason']}
-                    </div>
-                    """, unsafe_allow_html=True)
-                    st.link_button(f"📲 Kirim Alert ke Owner — {alarm['cabang']}", wa_alarm, key=f"alarm_{alarm['kasir']}")
+                    st.markdown(
+                        "<div style='background:#ff3b5c11;border:1px solid #ff3b5c33;border-radius:8px;"
+                        "padding:12px 16px;margin-bottom:8px;'>"
+                        "<b style='color:#ff3b5c;'>⚠ ALARM</b><br>"
+                        "Kasir: " + alarm['kasir'] + " · Cabang: " + alarm['cabang'] + " · Jumlah: Rp {:,.0f}".format(alarm['jumlah']) + "<br>"
+                        "Alasan: " + alarm['reason'] + "</div>",
+                        unsafe_allow_html=True
+                    )
+                    st.link_button("📲 Kirim Alert ke Owner — " + alarm['cabang'], wa_alarm, key="alarm_" + alarm['kasir'] + "_" + alarm['cabang'])
             else:
                 st.success("✅ Tidak ada mismatch kasir vs CCTV.")
 
@@ -2131,21 +2075,29 @@ elif menu == "Admin Access":
                 st.dataframe(hasil["void"][["ID_Transaksi","Cabang","Kasir","Jumlah","Waktu"]], use_container_width=True)
                 for cab in hasil["void"]["Cabang"].unique():
                     alarm_link = trigger_alarm("VOID Mencurigakan Berulang", "—", cab, 0)
-                    st.link_button(f"Alert Owner — {cab}", alarm_link, key=f"voidalert_{cab}")
-            else: st.success("Tidak ada VOID mencurigakan.")
+                    st.link_button("Alert Owner — " + cab, alarm_link, key="voidalert_" + cab)
+            else:
+                st.success("Tidak ada VOID mencurigakan.")
         with tf:
             if not hasil["fraud"].empty:
                 st.error("Pola duplikat < 5 menit terdeteksi!")
                 st.dataframe(hasil["fraud"][["ID_Transaksi","Cabang","Kasir","Jumlah","selisih_menit"]], use_container_width=True)
-            else: st.success("Tidak ada pola duplikat.")
+            else:
+                st.success("Tidak ada pola duplikat.")
         with ts:
             if not hasil["suspicious"].empty:
                 st.error("Selisih saldo ditemukan!")
                 st.dataframe(hasil["suspicious"][["ID_Transaksi","Cabang","Kasir","Saldo_Fisik","Saldo_Sistem","selisih_saldo"]], use_container_width=True)
-            else: st.success("Saldo seimbang.")
+            else:
+                st.success("Saldo seimbang.")
 
         st.divider()
-        st.markdown("<div style='font-size:12px;color:#7a9bbf;background:#101c2e;border:1px solid #1e3352;border-radius:8px;padding:10px 14px;margin-bottom:12px;'>💡 <b>Efisiensi API Liaison:</b> Hanya anomali yang dikirim ke Gemini — transaksi normal difilter lokal. Hemat 80% biaya API.</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div style='font-size:12px;color:#7a9bbf;background:#101c2e;border:1px solid #1e3352;"
+            "border-radius:8px;padding:10px 14px;margin-bottom:12px;'>"
+            "💡 <b>Efisiensi API Liaison:</b> Hanya anomali yang dikirim ke Gemini — transaksi normal difilter lokal. Hemat 80% biaya API.</div>",
+            unsafe_allow_html=True
+        )
 
         if model_vguard:
             if st.button("🤖 Jalankan AI Deep Scan (Anomali Only)", type="primary", key="btn_deep_scan"):
@@ -2155,7 +2107,12 @@ elif menu == "Admin Access":
                 else:
                     with st.spinner("Agent Liaison + Gemini menganalisis anomali..."):
                         try:
-                            prompt = "Analisis HANYA data anomali ini (transaksi normal sudah difilter Agent Liaison):\n\n" + fraud_rows.to_string(index=False) + "\n\nBerikan: 1) Pola kecurangan yang terdeteksi, 2) Kasir paling berisiko, 3) Rekomendasi taktis untuk Owner. Format ringkas dan actionable."
+                            prompt = (
+                                "Analisis HANYA data anomali ini (transaksi normal sudah difilter Agent Liaison):\n\n"
+                                + fraud_rows.to_string(index=False)
+                                + "\n\nBerikan: 1) Pola kecurangan yang terdeteksi, 2) Kasir paling berisiko, "
+                                "3) Rekomendasi taktis untuk Owner. Format ringkas dan actionable."
+                            )
                             resp = model_vguard.generate_content(prompt)
                             res_text = resp.text.strip() if resp.text else "Tidak ada pola kritis tambahan."
                             st.session_state.api_cost_total += 150
@@ -2180,50 +2137,54 @@ elif menu == "Admin Access":
                 cid  = klien.get("Client_ID","—")
                 pkg  = klien.get("Produk","V-LITE")
                 hb, hs = HARGA_MAP.get(pkg, ("—","—"))
-                wa_tgt = klien.get("WhatsApp",WA_NUMBER)
-                if not wa_tgt.startswith("62"): wa_tgt = "62" + wa_tgt.lstrip("0")
+                wa_tgt = klien.get("WhatsApp", WA_NUMBER)
+                if not wa_tgt.startswith("62"):
+                    wa_tgt = "62" + wa_tgt.lstrip("0")
                 ref_badge = ""
                 if klien.get("Ref"):
-                    ref_badge = f"<span style='background:#ffd70011;color:#ffd700;border:1px solid #ffd70044;border-radius:20px;font-size:10px;padding:2px 8px;font-family:JetBrains Mono,monospace;margin-left:8px;'>🔗 Ref: {klien['Ref']}</span>"
-
-                st.markdown(f"""
-                <div class='client-card-pending'>
-                    <div style='display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;'>
-                        <div>
-                            <div style='font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:#e8f4ff;'>{klien.get("Nama Klien","—")} — {klien.get("Nama Usaha","—")}</div>
-                            <div style='font-family:JetBrains Mono,monospace;font-size:10px;color:#00d4ff;margin-bottom:4px;'>{cid} · {pkg} · {hb}/bln {ref_badge}</div>
-                            <div style='font-size:12px;color:#7a9bbf;'>WA: {klien.get("WhatsApp","—")} · Daftar: {klien.get("Tanggal","—")}</div>
-                            {f'<div style="font-size:12px;color:#7a9bbf;margin-top:4px;">Catatan: {klien.get("Catatan","")}</div>' if klien.get("Catatan") else ""}
-                        </div>
-                        <span class='client-badge-pending'>Menunggu Pembayaran</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    ref_badge = (
+                        "<span style='background:#ffd70011;color:#ffd700;border:1px solid #ffd70044;"
+                        "border-radius:20px;font-size:10px;padding:2px 8px;font-family:JetBrains Mono,monospace;"
+                        "margin-left:8px;'>🔗 Ref: " + klien["Ref"] + "</span>"
+                    )
+                st.markdown(
+                    "<div class='client-card-pending'>"
+                    "<div style='display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;'>"
+                    "<div>"
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:#e8f4ff;'>"
+                    + klien.get("Nama Klien","—") + " — " + klien.get("Nama Usaha","—") + "</div>"
+                    "<div style='font-family:JetBrains Mono,monospace;font-size:10px;color:#00d4ff;margin-bottom:4px;'>"
+                    + cid + " · " + pkg + " · " + hb + "/bln " + ref_badge + "</div>"
+                    "<div style='font-size:12px;color:#7a9bbf;'>WA: " + klien.get("WhatsApp","—") + " · Daftar: " + klien.get("Tanggal","—") + "</div>"
+                    + ("<div style='font-size:12px;color:#7a9bbf;margin-top:4px;'>Catatan: " + klien.get("Catatan","") + "</div>" if klien.get("Catatan") else "")
+                    + "</div><span class='client-badge-pending'>Menunggu Pembayaran</span></div></div>",
+                    unsafe_allow_html=True
+                )
 
                 pc1, pc2, pc3 = st.columns(3)
                 with pc1:
                     pay_link = buat_payment_link(pkg, klien.get("Nama Klien","Klien"))
-                    st.link_button("💳 Kirim Link Pembayaran", pay_link, use_container_width=True, key=f"pay_{cid}_{i}")
+                    st.link_button("💳 Kirim Link Pembayaran", pay_link, use_container_width=True, key="pay_" + cid + "_" + str(i))
                 with pc2:
                     db_idx = next((j for j,k in enumerate(st.session_state.db_umum) if k.get("Client_ID")==cid), None)
                     if db_idx is not None:
-                        if st.button("✅ Aktivasi Akun", key=f"aktiv_{cid}_{i}", type="primary", use_container_width=True):
+                        if st.button("✅ Aktivasi Akun", key="aktiv_" + cid + "_" + str(i), type="primary", use_container_width=True):
                             st.session_state.db_umum[db_idx]["Status"] = "Aktif"
-                            # Update referral status if applicable
                             for r in st.session_state.db_referrals:
                                 if r.get("new_client") == klien.get("Nama Klien") and r.get("status") == "Menunggu Konfirmasi":
                                     r["status"] = "Terbayar"
                             st.rerun()
                 with pc3:
                     akses_txt = urllib.parse.quote(
-                        f"Halo {klien.get('Nama Klien','Klien')},\n\n"
-                        f"✅ Akun V-Guard Anda telah AKTIF!\n\n"
-                        f"🔑 Client ID: {cid}\n"
-                        f"🔗 Dashboard: {BASE_APP_URL}\n"
-                        f"📦 Paket: {pkg}\n\n"
-                        f"Selamat menggunakan V-Guard AI!\n— Tim V-Guard AI"
+                        "Halo " + klien.get("Nama Klien","Klien") + ",\n\n"
+                        "✅ Akun V-Guard Anda telah AKTIF!\n\n"
+                        "🔑 Client ID: " + cid + "\n"
+                        "🔗 Dashboard: " + BASE_APP_URL + "\n"
+                        "📦 Paket: " + pkg + "\n\n"
+                        "Selamat menggunakan V-Guard AI!\n— Tim V-Guard AI"
                     )
-                    st.link_button("📲 Kirim Akses Klien", f"https://wa.me/{wa_tgt}?text={akses_txt}", use_container_width=True, key=f"access_{cid}_{i}")
+                    st.link_button("📲 Kirim Akses Klien", "https://wa.me/" + wa_tgt + "?text=" + akses_txt,
+                                   use_container_width=True, key="access_" + cid + "_" + str(i))
                 st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
 
     # ── TAB 5: AKTIVASI KLIEN ─────────────────────────────────────────
@@ -2253,7 +2214,7 @@ elif menu == "Admin Access":
                         "invoice_due_date": str(new_due),
                         "Source": "Admin Manual",
                     })
-                    st.success(f"Klien ditambahkan! Client ID: {cid_new}")
+                    st.success("Klien ditambahkan! Client ID: " + cid_new)
                     st.rerun()
                 else:
                     st.error("Nama dan WhatsApp wajib diisi.")
@@ -2261,36 +2222,61 @@ elif menu == "Admin Access":
         if not st.session_state.db_umum:
             st.info("Belum ada klien terdaftar.")
         else:
-            for i,klien in enumerate(st.session_state.db_umum):
+            for i, klien in enumerate(st.session_state.db_umum):
                 if "Client_ID" not in klien:
                     st.session_state.db_umum[i]["Client_ID"] = buat_client_id(klien["Nama Klien"],klien.get("WhatsApp",""))
-                cid = st.session_state.db_umum[i]["Client_ID"]
-                is_aktif = klien.get("Status")=="Aktif"
-                hb,hs = HARGA_MAP.get(klien["Produk"],("—","—"))
+                cid      = st.session_state.db_umum[i]["Client_ID"]
+                is_aktif = klien.get("Status") == "Aktif"
+                hb, hs   = HARGA_MAP.get(klien["Produk"], ("—","—"))
                 card_cls  = "client-card-aktif" if is_aktif else "client-card-pending"
                 badge_cls = "client-badge-aktif" if is_aktif else "client-badge-pending"
                 status_txt = "Aktif" if is_aktif else "Menunggu Pembayaran"
-                st.markdown("<div class='" + card_cls + "'><div style='font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:#e8f4ff;'>" + klien["Nama Klien"] + " — " + klien.get("Nama Usaha","-") + "</div><div style='font-family:JetBrains Mono,monospace;font-size:10px;color:#00d4ff;margin-bottom:6px;'>" + cid + " · " + klien["Produk"] + "</div><div style='font-size:12px;color:#7a9bbf;margin-bottom:8px;'>WA: " + klien.get("WhatsApp","-") + " · " + hb + "/bln · Setup: " + hs + "</div><span class='" + badge_cls + "'>" + status_txt + "</span></div>", unsafe_allow_html=True)
-                wa_tgt = klien.get("WhatsApp",WA_NUMBER)
-                if not wa_tgt.startswith("62"): wa_tgt = "62" + wa_tgt.lstrip("0")
+
+                st.markdown(
+                    "<div class='" + card_cls + "'>"
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:#e8f4ff;'>"
+                    + klien["Nama Klien"] + " — " + klien.get("Nama Usaha","-") + "</div>"
+                    "<div style='font-family:JetBrains Mono,monospace;font-size:10px;color:#00d4ff;margin-bottom:6px;'>"
+                    + cid + " · " + klien["Produk"] + "</div>"
+                    "<div style='font-size:12px;color:#7a9bbf;margin-bottom:8px;'>WA: " + klien.get("WhatsApp","-") + " · " + hb + "/bln · Setup: " + hs + "</div>"
+                    "<span class='" + badge_cls + "'>" + status_txt + "</span></div>",
+                    unsafe_allow_html=True
+                )
+
+                wa_tgt = klien.get("WhatsApp", WA_NUMBER)
+                if not wa_tgt.startswith("62"):
+                    wa_tgt = "62" + wa_tgt.lstrip("0")
+
                 ac1,ac2,ac3,ac4 = st.columns(4)
                 with ac1:
                     if is_aktif:
-                        if st.button("⏸ Deactivate", key=f"deact_{i}", use_container_width=True):
-                            st.session_state.db_umum[i]["Status"] = "Menunggu Pembayaran"; st.rerun()
+                        if st.button("⏸ Deactivate", key="deact_" + str(i), use_container_width=True):
+                            st.session_state.db_umum[i]["Status"] = "Menunggu Pembayaran"
+                            st.rerun()
                     else:
-                        if st.button("✅ Activate", key=f"act_{i}", use_container_width=True, type="primary"):
-                            st.session_state.db_umum[i]["Status"] = "Aktif"; st.rerun()
+                        if st.button("✅ Activate", key="act_" + str(i), use_container_width=True, type="primary"):
+                            st.session_state.db_umum[i]["Status"] = "Aktif"
+                            st.rerun()
                 with ac2:
-                    inv_txt = urllib.parse.quote(f"INVOICE V-GUARD AI\n\nYth. {klien['Nama Klien']}\nPaket: {klien['Produk']}\nBulanan: {hb}\nSetup: {hs}\n\nTransfer: BCA 3450074658 a/n Erwin Sinaga\nKonfirmasi setelah transfer.\n— Tim V-Guard AI")
-                    st.link_button("🧾 Invoice", f"https://wa.me/{wa_tgt}?text={inv_txt}", use_container_width=True, key=f"inv_{i}")
+                    inv_txt = urllib.parse.quote(
+                        "INVOICE V-GUARD AI\n\nYth. " + klien["Nama Klien"] + "\nPaket: " + klien["Produk"] + "\n"
+                        "Bulanan: " + hb + "\nSetup: " + hs + "\n\n"
+                        "Transfer: BCA 3450074658 a/n Erwin Sinaga\nKonfirmasi setelah transfer.\n— Tim V-Guard AI"
+                    )
+                    st.link_button("🧾 Invoice", "https://wa.me/" + wa_tgt + "?text=" + inv_txt,
+                                   use_container_width=True, key="inv_" + str(i))
                 with ac3:
-                    akses_txt = urllib.parse.quote(f"Halo {klien['Nama Klien']},\n\n✅ Akun V-Guard Anda AKTIF!\n\n🔑 Client ID: {cid}\n🔗 Portal: {BASE_APP_URL}\n📦 Paket: {klien['Produk']}\n\n— Tim V-Guard AI")
-                    st.link_button("🔑 Kirim Akses", f"https://wa.me/{wa_tgt}?text={akses_txt}", use_container_width=True, key=f"akses_{i}")
+                    akses_txt = urllib.parse.quote(
+                        "Halo " + klien["Nama Klien"] + ",\n\n✅ Akun V-Guard Anda AKTIF!\n\n"
+                        "🔑 Client ID: " + cid + "\n🔗 Portal: " + BASE_APP_URL + "\n📦 Paket: " + klien["Produk"] + "\n\n— Tim V-Guard AI"
+                    )
+                    st.link_button("🔑 Kirim Akses", "https://wa.me/" + wa_tgt + "?text=" + akses_txt,
+                                   use_container_width=True, key="akses_" + str(i))
                 with ac4:
                     ref_link2 = buat_referral_link(cid)
-                    ref_txt = urllib.parse.quote(f"Link referral Anda: {ref_link2}\nKomisi 10% dari setiap klien baru yang berhasil!")
-                    st.link_button("🔗 Referral", f"https://wa.me/{wa_tgt}?text={ref_txt}", use_container_width=True, key=f"ref_{i}")
+                    ref_txt   = urllib.parse.quote("Link referral Anda: " + ref_link2 + "\nKomisi 10% dari setiap klien baru yang berhasil!")
+                    st.link_button("🔗 Referral", "https://wa.me/" + wa_tgt + "?text=" + ref_txt,
+                                   use_container_width=True, key="ref_" + str(i))
                 st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
 
     # ── TAB 6: REFERRAL DASHBOARD ─────────────────────────────────────
@@ -2298,9 +2284,7 @@ elif menu == "Admin Access":
         st.markdown("<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#e8f4ff;margin-bottom:4px;'>🔗 Referral Dashboard</div>", unsafe_allow_html=True)
         st.markdown("<div style='font-size:13px;color:#7a9bbf;margin-bottom:20px;'>Monitor daftar referral masuk, status penjualan, dan kalkulasi komisi 10% yang harus dibayarkan.</div>", unsafe_allow_html=True)
 
-        db_refs = st.session_state.db_referrals
-
-        # Summary metrics
+        db_refs      = st.session_state.db_referrals
         total_refs   = len(db_refs)
         total_kom_r  = sum(r.get("komisi_10pct",0) for r in db_refs)
         kom_pending  = sum(r.get("komisi_10pct",0) for r in db_refs if r.get("status")=="Menunggu Konfirmasi")
@@ -2308,13 +2292,12 @@ elif menu == "Admin Access":
 
         rm1,rm2,rm3,rm4 = st.columns(4)
         rm1.metric("Total Referral", str(total_refs))
-        rm2.metric("Total Komisi", f"Rp {total_kom_r:,.0f}")
-        rm3.metric("Komisi Pending", f"Rp {kom_pending:,.0f}")
-        rm4.metric("Komisi Terbayar", f"Rp {kom_terbayar:,.0f}")
+        rm2.metric("Total Komisi", "Rp {:,.0f}".format(total_kom_r))
+        rm3.metric("Komisi Pending", "Rp {:,.0f}".format(kom_pending))
+        rm4.metric("Komisi Terbayar", "Rp {:,.0f}".format(kom_terbayar))
 
         st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
 
-        # Add demo referral
         with st.expander("➕ Input Referral Manual (untuk testing)"):
             mr1,mr2 = st.columns(2)
             with mr1:
@@ -2322,11 +2305,15 @@ elif menu == "Admin Access":
                 demo_new_nama  = st.text_input("Nama Klien Baru", key="demo_ref_nama")
                 demo_new_usaha = st.text_input("Nama Usaha Baru", key="demo_ref_usaha")
             with mr2:
-                demo_paket     = st.selectbox("Paket", ["V-LITE","V-PRO","V-ADVANCE","V-ELITE"], key="demo_ref_paket")
-                setup_map      = {"V-LITE":250_000,"V-PRO":750_000,"V-ADVANCE":3_500_000,"V-ELITE":10_000_000}
-                demo_setup     = setup_map.get(demo_paket, 750_000)
-                demo_komisi    = int(demo_setup * KOMISI_RATE)
-                st.markdown(f"<div style='padding:12px;background:#ffd70011;border:1px solid #ffd70033;border-radius:8px;margin-top:24px;font-size:13px;color:#ffd700;'>Setup Fee: Rp {demo_setup:,.0f}<br>Komisi 10%: <b>Rp {demo_komisi:,.0f}</b></div>", unsafe_allow_html=True)
+                demo_paket = st.selectbox("Paket", ["V-LITE","V-PRO","V-ADVANCE","V-ELITE"], key="demo_ref_paket")
+                setup_map  = {"V-LITE":250_000,"V-PRO":750_000,"V-ADVANCE":3_500_000,"V-ELITE":10_000_000}
+                demo_setup = setup_map.get(demo_paket, 750_000)
+                demo_komisi = int(demo_setup * KOMISI_RATE)
+                st.markdown(
+                    "<div style='padding:12px;background:#ffd70011;border:1px solid #ffd70033;border-radius:8px;"
+                    "margin-top:24px;font-size:13px;color:#ffd700;'>Setup Fee: Rp {:,.0f}<br>Komisi 10%: <b>Rp {:,.0f}</b></div>".format(demo_setup, demo_komisi),
+                    unsafe_allow_html=True
+                )
             if st.button("Tambah Referral", key="btn_add_ref", type="primary"):
                 if demo_ref_cid and demo_new_nama:
                     track_referral(demo_ref_cid, {"Nama Klien": demo_new_nama, "Nama Usaha": demo_new_usaha, "Produk": demo_paket}, demo_setup)
@@ -2338,59 +2325,57 @@ elif menu == "Admin Access":
         else:
             st.markdown("<div style='margin-bottom:12px;font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#e8f4ff;'>Daftar Referral Masuk</div>", unsafe_allow_html=True)
             for i, r in enumerate(db_refs):
-                is_paid  = r.get("status") == "Terbayar"
-                card_cls = "ref-card ref-card-paid" if is_paid else "ref-card"
-                badge_cls= "ref-badge-paid" if is_paid else "ref-badge-pending"
-                st.markdown(f"""
-                <div class='{card_cls}'>
-                    <div style='display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;'>
-                        <div>
-                            <div style='font-size:14px;color:#e8f4ff;font-weight:600;'>{r.get("new_client","—")} — {r.get("new_usaha","—")}</div>
-                            <div style='font-size:12px;color:#7a9bbf;margin-top:2px;'>
-                                Dari Ref: <b style='color:#00d4ff;font-family:JetBrains Mono,monospace;'>{r.get("ref_cid","—")}</b> ·
-                                Paket: {r.get("paket","—")} ·
-                                Setup: Rp {r.get("setup_fee",0):,.0f} ·
-                                Komisi: <b style='color:#ffd700;'>Rp {r.get("komisi_10pct",0):,.0f}</b>
-                            </div>
-                            <div style='font-size:11px;color:#4a6a8a;margin-top:2px;'>Tanggal: {r.get("tanggal","—")}</div>
-                        </div>
-                        <span class='{badge_cls}'>{r.get("status","—")}</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                is_paid   = r.get("status") == "Terbayar"
+                card_cls  = "ref-card ref-card-paid" if is_paid else "ref-card"
+                badge_cls = "ref-badge-paid" if is_paid else "ref-badge-pending"
+                st.markdown(
+                    "<div class='" + card_cls + "'>"
+                    "<div style='display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;'>"
+                    "<div>"
+                    "<div style='font-size:14px;color:#e8f4ff;font-weight:600;'>" + r.get("new_client","—") + " — " + r.get("new_usaha","—") + "</div>"
+                    "<div style='font-size:12px;color:#7a9bbf;margin-top:2px;'>"
+                    "Dari Ref: <b style='color:#00d4ff;font-family:JetBrains Mono,monospace;'>" + r.get("ref_cid","—") + "</b> · "
+                    "Paket: " + r.get("paket","—") + " · "
+                    "Setup: Rp {:,.0f} · Komisi: <b style='color:#ffd700;'>Rp {:,.0f}</b></div>".format(r.get("setup_fee",0), r.get("komisi_10pct",0)) +
+                    "<div style='font-size:11px;color:#4a6a8a;margin-top:2px;'>Tanggal: " + r.get("tanggal","—") + "</div>"
+                    "</div>"
+                    "<span class='" + badge_cls + "'>" + r.get("status","—") + "</span>"
+                    "</div></div>",
+                    unsafe_allow_html=True
+                )
 
                 rb1, rb2 = st.columns([2,1])
                 with rb1:
                     if not is_paid:
-                        if st.button("✅ Tandai Komisi Terbayar", key=f"pay_ref_{i}", use_container_width=True):
+                        if st.button("✅ Tandai Komisi Terbayar", key="pay_ref_" + str(i), use_container_width=True):
                             st.session_state.db_referrals[i]["status"] = "Terbayar"
                             st.rerun()
                     else:
                         st.markdown("<div style='font-size:12px;color:#00e676;padding:8px 0;'>✓ Komisi sudah dibayarkan</div>", unsafe_allow_html=True)
                 with rb2:
-                    # Find referrer's WA
                     referrer = next((k for k in st.session_state.db_umum if k.get("Client_ID","").upper() == r.get("ref_cid","").upper()), None)
                     if referrer and referrer.get("WhatsApp"):
                         wa_ref = referrer["WhatsApp"]
-                        if not wa_ref.startswith("62"): wa_ref = "62" + wa_ref.lstrip("0")
+                        if not wa_ref.startswith("62"):
+                            wa_ref = "62" + wa_ref.lstrip("0")
                         komisi_msg = urllib.parse.quote(
-                            f"Halo {referrer.get('Nama Klien','')},\n\n"
-                            f"🎉 Selamat! Referral Anda berhasil!\n\n"
-                            f"Klien: {r.get('new_client','—')}\n"
-                            f"Paket: {r.get('paket','—')}\n"
-                            f"Komisi 10%: Rp {r.get('komisi_10pct',0):,.0f}\n\n"
-                            f"Komisi akan ditransfer ke rekening Anda segera.\n— Tim V-Guard AI"
+                            "Halo " + referrer.get("Nama Klien","") + ",\n\n"
+                            "🎉 Selamat! Referral Anda berhasil!\n\n"
+                            "Klien: " + r.get("new_client","—") + "\n"
+                            "Paket: " + r.get("paket","—") + "\n"
+                            "Komisi 10%: Rp {:,.0f}\n\n".format(r.get("komisi_10pct",0)) +
+                            "Komisi akan ditransfer ke rekening Anda segera.\n— Tim V-Guard AI"
                         )
-                        st.link_button("📲 Notif Komisi", f"https://wa.me/{wa_ref}?text={komisi_msg}", use_container_width=True, key=f"notif_ref_{i}")
+                        st.link_button("📲 Notif Komisi", "https://wa.me/" + wa_ref + "?text=" + komisi_msg,
+                                       use_container_width=True, key="notif_ref_" + str(i))
                 st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
 
-            # Export
             st.divider()
             df_refs = pd.DataFrame(db_refs)
             st.download_button(
                 "⬇️ Download Laporan Referral CSV",
                 data=df_refs.to_csv(index=False).encode("utf-8"),
-                file_name=f"vguard_referrals_{datetime.date.today()}.csv",
+                file_name="vguard_referrals_" + str(datetime.date.today()) + ".csv",
                 mime="text/csv",
             )
 
@@ -2399,49 +2384,59 @@ elif menu == "Admin Access":
         st.markdown("<div style='font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:#e8f4ff;margin-bottom:4px;'>⏰ Auto-Billing — H-7 & H-1 Reminder</div>", unsafe_allow_html=True)
         st.markdown("<div style='font-size:13px;color:#7a9bbf;margin-bottom:20px;'>Agent Collector #9 mengingatkan klien otomatis H-7 dan H-1 sebelum jatuh tempo invoice.</div>", unsafe_allow_html=True)
 
-        # Check reminders
         reminders = check_autobilling_reminders(st.session_state.db_umum)
 
         if reminders:
-            st.warning(f"⚠️ {len(reminders)} klien mendekati jatuh tempo invoice!")
+            st.warning("⚠️ " + str(len(reminders)) + " klien mendekati jatuh tempo invoice!")
             for rem in reminders:
                 color = "#ff3b5c" if rem["delta"] == 1 else "#ffab00"
                 label = "H-1 🚨 BESOK JATUH TEMPO" if rem["delta"] == 1 else "H-7 Akan jatuh tempo"
                 wa_rem = rem["wa"]
-                if wa_rem and not wa_rem.startswith("62"): wa_rem = "62" + wa_rem.lstrip("0")
+                if wa_rem and not wa_rem.startswith("62"):
+                    wa_rem = "62" + wa_rem.lstrip("0")
+
+                if rem["delta"] == 1:
+                    due_info = "BESOK!"
+                else:
+                    due_info = "dalam " + str(rem["delta"]) + " hari"
+
                 msg_rem = urllib.parse.quote(
-                    f"{'🚨 URGENT — ' if rem['delta']==1 else '⏰ '}PENGINGAT INVOICE V-GUARD AI\n\n"
-                    f"Yth. {rem['nama']},\n\n"
-                    f"Invoice paket {rem['paket']} Anda akan jatuh tempo pada {rem['due']} "
-                    f"({'BESOK!' if rem['delta']==1 else f'dalam {rem[\"delta\"]} hari'}).\n\n"
-                    f"Mohon segera lakukan pembayaran agar layanan tidak terputus.\n\n"
-                    f"Transfer: BCA 3450074658 a/n Erwin Sinaga\n— Tim V-Guard AI"
+                    ("🚨 URGENT — " if rem["delta"] == 1 else "⏰ ") + "PENGINGAT INVOICE V-GUARD AI\n\n"
+                    "Yth. " + rem["nama"] + ",\n\n"
+                    "Invoice paket " + rem["paket"] + " Anda akan jatuh tempo pada " + rem["due"] + " (" + due_info + ").\n\n"
+                    "Mohon segera lakukan pembayaran agar layanan tidak terputus.\n\n"
+                    "Transfer: BCA 3450074658 a/n Erwin Sinaga\n— Tim V-Guard AI"
                 )
-                st.markdown(f"""
-                <div style='background:#101c2e;border:1px solid {color}44;border-left:3px solid {color};border-radius:8px;padding:14px 18px;margin-bottom:10px;'>
-                    <div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:{color};margin-bottom:4px;'>{label}</div>
-                    <div style='font-size:13px;color:#e8f4ff;'>{rem['nama']} — {rem['usaha']}</div>
-                    <div style='font-size:12px;color:#7a9bbf;'>Paket: {rem['paket']} · Due: {rem['due']} · WA: {rem['wa']}</div>
-                </div>
-                """, unsafe_allow_html=True)
+
+                st.markdown(
+                    "<div style='background:#101c2e;border:1px solid " + color + "44;border-left:3px solid " + color + ";"
+                    "border-radius:8px;padding:14px 18px;margin-bottom:10px;'>"
+                    "<div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:" + color + ";margin-bottom:4px;'>" + label + "</div>"
+                    "<div style='font-size:13px;color:#e8f4ff;'>" + rem["nama"] + " — " + rem["usaha"] + "</div>"
+                    "<div style='font-size:12px;color:#7a9bbf;'>Paket: " + rem["paket"] + " · Due: " + rem["due"] + " · WA: " + rem["wa"] + "</div></div>",
+                    unsafe_allow_html=True
+                )
                 if wa_rem:
-                    st.link_button(f"📲 Kirim Reminder ke {rem['nama']}", f"https://wa.me/{wa_rem}?text={msg_rem}", key=f"rem_{rem['cid']}")
+                    st.link_button(
+                        "📲 Kirim Reminder ke " + rem["nama"],
+                        "https://wa.me/" + wa_rem + "?text=" + msg_rem,
+                        key="rem_" + rem["cid"]
+                    )
         else:
             st.success("✅ Tidak ada invoice yang mendekati jatuh tempo saat ini.")
 
         st.divider()
-        st.markdown("""
-        <div style='background:#101c2e;border:1px solid #1e3352;border-radius:10px;padding:16px 20px;'>
-            <div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#00d4ff;margin-bottom:10px;'>⚙️ Setup Auto-Billing</div>
-            <div style='font-size:12px;color:#7a9bbf;line-height:1.8;'>
-                Untuk mengaktifkan pengiriman otomatis tanpa klik manual:<br>
-                1. Integrasikan dengan <b style='color:#e8f4ff;'>Fonnte</b> atau <b style='color:#e8f4ff;'>WA Business API</b><br>
-                2. Set <code style='color:#00d4ff;'>invoice_due_date</code> saat klien aktif (field sudah ada di form Tambah Klien)<br>
-                3. Jadwalkan <code style='color:#00d4ff;'>check_autobilling_reminders()</code> via cron job atau Cloud Scheduler setiap pukul 08:00 WIB<br>
-                4. Hubungkan response ke endpoint WA gateway untuk kirim otomatis
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            "<div style='background:#101c2e;border:1px solid #1e3352;border-radius:10px;padding:16px 20px;'>"
+            "<div style='font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#00d4ff;margin-bottom:10px;'>⚙️ Setup Auto-Billing</div>"
+            "<div style='font-size:12px;color:#7a9bbf;line-height:1.8;'>"
+            "Untuk mengaktifkan pengiriman otomatis tanpa klik manual:<br>"
+            "1. Integrasikan dengan <b style='color:#e8f4ff;'>Fonnte</b> atau <b style='color:#e8f4ff;'>WA Business API</b><br>"
+            "2. Set <code style='color:#00d4ff;'>invoice_due_date</code> saat klien aktif (field sudah ada di form Tambah Klien)<br>"
+            "3. Jadwalkan <code style='color:#00d4ff;'>check_autobilling_reminders()</code> via cron job atau Cloud Scheduler setiap pukul 08:00 WIB<br>"
+            "4. Hubungkan response ke endpoint WA gateway untuk kirim otomatis</div></div>",
+            unsafe_allow_html=True
+        )
 
     # ── TAB 8: DATABASE ───────────────────────────────────────────────
     with war_tabs[8]:
@@ -2454,12 +2449,12 @@ elif menu == "Admin Access":
             st.download_button(
                 "⬇️ Download CSV Klien",
                 data=df_db.to_csv(index=False).encode("utf-8"),
-                file_name=f"vguard_clients_{datetime.date.today()}.csv",
+                file_name="vguard_clients_" + str(datetime.date.today()) + ".csv",
                 mime="text/csv",
             )
             st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
             if st.button("🗑️ Hapus Semua Data (Reset)", key="btn_reset_db"):
-                st.session_state.db_umum = []
+                st.session_state.db_umum      = []
                 st.session_state.db_pengajuan = []
                 st.session_state.db_referrals = []
                 st.rerun()
