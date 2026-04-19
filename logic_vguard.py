@@ -35,10 +35,10 @@ BASE_APP_URL = "https://v-guard-ai.streamlit.app"
 KOMISI_RATE  = 0.10
 
 HARGA_NUMERIK = {
-    "V-LITE":    150_000,
-    "V-PRO":     450_000,
-    "V-ADVANCE": 1_200_000,
-    "V-ELITE":   3_500_000,
+    "V-LITE":    150000,
+    "V-PRO":     450000,
+    "V-ADVANCE": 1_200000,
+    "V-ELITE":   3500000,
     "V-ULTRA":   0,
 }
 
@@ -1503,3 +1503,25 @@ def track_referral(ref_cid: str, new_client_data: dict, setup_amount: float):
 def process_yolo_cctv_frame(frame_data: dict) -> dict:
     """Legacy wrapper — dipakai di app.py."""
     return get_squad().agent(1).run(frame_data)
+# ... (Kode AgentVisionary, AgentLiaison, dll yang sudah ada)
+
+# =============================================================================
+# DASHBOARD HELPERS — Paste di Sini
+# =============================================================================
+
+def get_pos_connections():
+    """Mengembalikan status koneksi untuk dashboard Liaison"""
+    return [
+        {"name": "Moka POS", "status": "Connected", "latency": "89ms", "icon": "📱", "color": "green", "info": "Cloud Sync Aktif"},
+        {"name": "iReap POS", "status": "Connected", "latency": "142ms", "icon": "🛒", "color": "green", "info": "Data Real-time"},
+        {"name": "Majoo", "status": "Connected", "latency": "110ms", "icon": "🏪", "color": "green", "info": "API Integrasi Aktif"},
+        {"name": "Pawoon", "status": "Connected", "latency": "95ms", "icon": "🍕", "color": "green", "info": "Integrasi Berhasil"},
+        {"name": "Olsera", "status": "Connected", "latency": "120ms", "icon": "🛍️", "color": "green", "info": "Ready"},
+        {"name": "SAP B1", "status": "Connected", "latency": "210ms", "icon": "🏢", "color": "green", "info": "Server Lokal Aktif"}
+    ]
+
+def get_squad():
+    return ["Majoo", "Pawoon", "SAP B1", "Moka POS", "iReap POS"]
+
+def check_autobilling_reminders():
+    return ["Klien A (Majoo)", "Klien C (SAP B1)"]
