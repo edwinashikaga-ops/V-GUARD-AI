@@ -12,6 +12,8 @@ import datetime
 import re
 import json
 import random
+from logic_vguard import *
+init_vguard_core()
 
 # =============================================================================
 # 1. PAGE CONFIG — MUST BE FIRST STREAMLIT CALL
