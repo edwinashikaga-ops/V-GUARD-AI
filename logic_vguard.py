@@ -2,8 +2,7 @@ import streamlit as st
 import datetime
 import pandas as pd
 import uuid
-from logic_vguard import *
-init_vguard_core()
+
 
 # =============================================================================
 # INITIALIZATION (Menyiapkan Database Semua Agen)
