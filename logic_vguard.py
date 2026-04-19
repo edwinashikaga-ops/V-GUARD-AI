@@ -1505,23 +1505,3 @@ def process_yolo_cctv_frame(frame_data: dict) -> dict:
     return get_squad().agent(1).run(frame_data)
 # ... (Kode AgentVisionary, AgentLiaison, dll yang sudah ada)
 
-# =============================================================================
-# DASHBOARD HELPERS — Paste di Sini
-# =============================================================================
-
-def get_pos_connections():
-    """Mengembalikan status koneksi untuk dashboard Liaison"""
-    return [
-        {"name": "Moka POS", "status": "Connected", "latency": "89ms", "icon": "📱", "color": "green", "info": "Cloud Sync Aktif"},
-        {"name": "iReap POS", "status": "Connected", "latency": "142ms", "icon": "🛒", "color": "green", "info": "Data Real-time"},
-        {"name": "Majoo", "status": "Connected", "latency": "110ms", "icon": "🏪", "color": "green", "info": "API Integrasi Aktif"},
-        {"name": "Pawoon", "status": "Connected", "latency": "95ms", "icon": "🍕", "color": "green", "info": "Integrasi Berhasil"},
-        {"name": "Olsera", "status": "Connected", "latency": "120ms", "icon": "🛍️", "color": "green", "info": "Ready"},
-        {"name": "SAP B1", "status": "Connected", "latency": "210ms", "icon": "🏢", "color": "green", "info": "Server Lokal Aktif"}
-    ]
-
-def get_squad():
-    return ["Majoo", "Pawoon", "SAP B1", "Moka POS", "iReap POS"]
-
-def check_autobilling_reminders():
-    return ["Klien A (Majoo)", "Klien C (SAP B1)"]
