@@ -14,8 +14,7 @@ import json
 import random
 from logic_vguard import *
 init_vguard_core()
-from snippet_1_AI_AGENTS import AI_AGENTS
-from snippet_2_menu_functions import menu_visionary, menu_treasurer
+
 # =============================================================================
 # 1. PAGE CONFIG — MUST BE FIRST STREAMLIT CALL
 # =============================================================================
@@ -133,12 +132,15 @@ HARGA_MAP = {
     "V-ULTRA":   ("Custom",             "Konsultasi"),
 }
 HARGA_NUMERIK = {
-    "V-LITE":    150_000,
-    "V-PRO":     450_000,
-    "V-ADVANCE": 1_200_000,
-    "V-ELITE":   3_500_000,
+    "V-LITE":    150000,
+    "V-PRO":     450000,
+    "V-ADVANCE": 1200000,
+    "V-ELITE":   3500000,
     "V-ULTRA":   0,
 }
+# 4. BARU IMPORT SNIPPET (Taruh setelah HARGA_NUMERIK)
+from snippet_1_AI_AGENTS import AI_AGENTS
+from snippet_2_menu_functions import menu_visionary, menu_treasurer
 SOURCE_MAP = {
     "whatsapp":  "WhatsApp",
     "facebook":  "Facebook",
