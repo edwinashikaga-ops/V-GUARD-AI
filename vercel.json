@@ -1,23 +1,10 @@
 {
   "version": 2,
-  "installCommand": "npm install -g pnpm && pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm vite build",
+  "buildCommand": "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm vite build",
   "outputDirectory": "dist/public",
+  "installCommand": "npm install -g pnpm && pnpm install --no-frozen-lockfile",
   "framework": null,
-  "functions": {
-    "api/index.ts": {
-      "runtime": "@vercel/node@3"
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/trpc/:path*",
-      "destination": "/api/index"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
