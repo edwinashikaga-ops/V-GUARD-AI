@@ -21,12 +21,22 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<ClientUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+// EMERGENCY: Mock user for client review when auth server is down
+const MOCK_USER: ClientUser = {
+  clientId: "mock-client-id",
+  name: "Client Reviewer",
+  tier: "V-ULTRA",
+  token: "mock-token"
+};
 
-  // Load user from localStorage on mount
+export function AuthProvider({ children }: AuthProviderProps) {
+  // Force mock user and loading false for emergency bypass
+  const [user, setUser] = useState<ClientUser | null>(MOCK_USER);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load user from localStorage on mount (disabled for bypass)
   useEffect(() => {
+    /*
     const stored = localStorage.getItem("vguard_user");
     if (stored) {
       try {
@@ -37,16 +47,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }
     setIsLoading(false);
+    */
+    setUser(MOCK_USER);
+    setIsLoading(false);
   }, []);
 
   const login = async (clientId: string, password: string) => {
     setIsLoading(true);
     try {
-      // TODO: Call tRPC endpoint
-      // const result = await trpc.auth.loginClient.mutate({ clientId, password });
-      // setUser(result);
-      // localStorage.setItem("vguard_user", JSON.stringify(result));
-      console.log("Login attempt:", clientId);
+      console.log("Login disabled during bypass:", clientId);
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
@@ -58,8 +67,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      // TODO: Call tRPC endpoint
-      // await trpc.auth.logout.mutate();
       setUser(null);
       localStorage.removeItem("vguard_user");
     } catch (error) {
@@ -73,8 +80,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
-        isLoading,
+        isAuthenticated: true, // Always true for bypass
+        isLoading: false,      // Always false for bypass
         login,
         logout,
       }}

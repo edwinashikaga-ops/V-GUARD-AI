@@ -8,25 +8,38 @@ type UseAuthOptions = {
   redirectPath?: string;
 };
 
+// EMERGENCY: Mock user for client review when auth server is down
+const MOCK_USER = {
+  id: "mock-client-id",
+  name: "Client Reviewer",
+  email: "client@vguard.ai",
+  role: "admin",
+  tier: "V-ULTRA"
+};
+
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
   const utils = trpc.useUtils();
 
+  // meQuery disabled during emergency bypass
+  /*
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
   });
+  */
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
-      utils.auth.me.setData(undefined, null);
+      // utils.auth.me.setData(undefined, null);
     },
   });
 
   const logout = useCallback(async () => {
     try {
-      await logoutMutation.mutateAsync();
+      // await logoutMutation.mutateAsync();
+      console.log("Logout disabled during bypass");
     } catch (error: unknown) {
       if (
         error instanceof TRPCClientError &&
@@ -36,49 +49,44 @@ export function useAuth(options?: UseAuthOptions) {
       }
       throw error;
     } finally {
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
+      // utils.auth.me.setData(undefined, null);
+      // await utils.auth.me.invalidate();
     }
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
+    // localStorage.setItem(
+    //   "manus-runtime-user-info",
+    //   JSON.stringify(MOCK_USER)
+    // );
     return {
-      user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
+      user: MOCK_USER,
+      loading: false,
+      error: null,
+      isAuthenticated: true,
     };
-  }, [
-    meQuery.data,
-    meQuery.error,
-    meQuery.isLoading,
-    logoutMutation.error,
-    logoutMutation.isPending,
-  ]);
+  }, []);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
+    // Redirect logic disabled during bypass
+    /*
     if (meQuery.isLoading || logoutMutation.isPending) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
     if (window.location.pathname === redirectPath) return;
 
     window.location.href = redirectPath
+    */
   }, [
     redirectOnUnauthenticated,
     redirectPath,
-    logoutMutation.isPending,
-    meQuery.isLoading,
     state.user,
   ]);
 
   return {
     ...state,
-    refresh: () => meQuery.refetch(),
+    refresh: () => Promise.resolve(),
     logout,
   };
 }
