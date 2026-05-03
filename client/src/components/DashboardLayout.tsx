@@ -30,10 +30,11 @@ import { Button } from "./ui/button";
 
 const getMenuItems = (t: (key: string) => string) => [
   { icon: LayoutDashboard, label: t("portal.dashboard"), path: "/portal/dashboard", key: "dashboard" },
-  { icon: TrendingUp, label: t("portal.roi"), path: "/roi", key: "roi" },
-  { icon: Package, label: t("portal.produk"), path: "/produk", key: "produk" },
+  { icon: TrendingUp, label: t("portal.roi"), path: "/portal/investor", key: "roi" },
+  { icon: Package, label: t("portal.produk"), path: "/portal/referral", key: "produk" },
   { icon: BarChart3, label: t("portal.transactions"), path: "/portal/transactions", key: "transactions" },
   { icon: Users, label: t("portal.agents"), path: "/portal/agents", key: "agents" },
+  { icon: Users, label: t("portal.admin"), path: "/portal/admin", key: "admin" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

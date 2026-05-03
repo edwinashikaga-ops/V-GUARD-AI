@@ -5,6 +5,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import DashboardLayout from "./components/DashboardLayout";
 
 // Public Pages
 import Home from "./pages/Home";
@@ -27,14 +28,23 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/pricing" component={Pricing} />
 
-      {/* Portal Routes */}
-      <Route path="/portal" component={Portal} />
-      <Route path="/portal/dashboard" component={ClientDashboard} />
-      <Route path="/portal/transactions" component={Transactions} />
-      <Route path="/portal/agents" component={Agents} />
-      <Route path="/portal/referral" component={Referral} />
-      <Route path="/portal/investor" component={Investor} />
-      <Route path="/portal/admin" component={Admin} />
+      {/* Portal Routes wrapped in DashboardLayout */}
+      <Route path="/portal/:rest*">
+        {(params) => (
+          <DashboardLayout>
+            <Switch>
+              <Route path="/portal" component={Portal} />
+              <Route path="/portal/dashboard" component={ClientDashboard} />
+              <Route path="/portal/transactions" component={Transactions} />
+              <Route path="/portal/agents" component={Agents} />
+              <Route path="/portal/referral" component={Referral} />
+              <Route path="/portal/investor" component={Investor} />
+              <Route path="/portal/admin" component={Admin} />
+              <Route component={NotFound} />
+            </Switch>
+          </DashboardLayout>
+        )}
+      </Route>
 
       {/* 404 */}
       <Route path="/404" component={NotFound} />
