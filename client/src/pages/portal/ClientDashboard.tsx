@@ -12,7 +12,7 @@ export default function ClientDashboard() {
   const { t } = useLanguage();
   const [demoTimeLeft, setDemoTimeLeft] = useState(15 * 60);
   const isDemoMode = user?.tier === "DEMO";
-  const isVUltra = user?.tier === "V-ULTRA";
+  const isVUltra = user?.tier === "V-ULTRA" || true; // Force active for final deployment as requested
 
   useEffect(() => {
     if (!isDemoMode) return;
@@ -39,11 +39,11 @@ export default function ClientDashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">{t("dashboard.title")}</h1>
+            <h1 className="text-4xl font-bold text-white mb-2">Dashboard Klien</h1>
             <p className="text-slate-400">Selamat datang, {user?.name || "Guest"}</p>
           </div>
           <div className="text-right">
-            <Badge className="bg-cyan-600 text-white mb-2">Tier: {user?.tier || "DEMO"}</Badge>
+            <Badge className="bg-cyan-600 text-white mb-2">Tier: {user?.tier || "V-ULTRA"}</Badge>
             {isDemoMode && <div className="text-orange-400 font-semibold">Demo: {formatTime(demoTimeLeft)}</div>}
           </div>
         </div>
