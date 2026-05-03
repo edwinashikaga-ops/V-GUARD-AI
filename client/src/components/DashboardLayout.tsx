@@ -42,6 +42,15 @@ const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
+// EMERGENCY: Mock user for client review when auth server is down
+const MOCK_USER = {
+  id: "mock-client-id",
+  name: "Client Reviewer",
+  email: "client@vguard.ai",
+  role: "admin",
+  tier: "enterprise"
+};
+
 export default function DashboardLayout({
   children,
 }: {
@@ -51,7 +60,12 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
-  const { loading, user } = useAuth();
+  
+  // Disable auth loading and redirect for client review
+  // const { loading, user } = useAuth();
+  const loading = false;
+  const user = MOCK_USER;
+  
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -62,6 +76,8 @@ export default function DashboardLayout({
     return <DashboardLayoutSkeleton />
   }
 
+  // Auth check disabled for emergency client review
+  /*
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -87,6 +103,7 @@ export default function DashboardLayout({
       </div>
     );
   }
+  */
 
   return (
     <SidebarProvider
@@ -112,7 +129,11 @@ function DashboardLayoutContent({
   children,
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
-  const { user, logout } = useAuth();
+  // Use mock user and dummy logout for client review
+  // const { user, logout } = useAuth();
+  const user = MOCK_USER;
+  const logout = () => { console.log("Logout disabled during emergency bypass"); };
+  
   const { t } = useLanguage();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();

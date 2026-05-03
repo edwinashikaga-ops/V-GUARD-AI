@@ -18,7 +18,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  // EMERGENCY: Disable automatic redirect to login for client review
+  console.warn("[EMERGENCY] Auth redirect bypassed:", error.message);
+  // window.location.href = getLoginUrl();
 };
 
 queryClient.getQueryCache().subscribe(event => {
