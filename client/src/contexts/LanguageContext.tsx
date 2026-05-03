@@ -40,6 +40,8 @@ const translations = {
 
     // Portal
     "portal.dashboard": "Dashboard",
+    "portal.roi": "ROI Calculator",
+    "portal.produk": "Produk",
     "portal.transactions": "Transaksi",
     "portal.agents": "AI Agents",
     "portal.referral": "Referral",
@@ -107,6 +109,8 @@ const translations = {
 
     // Portal
     "portal.dashboard": "Dashboard",
+    "portal.roi": "ROI Calculator",
+    "portal.produk": "Products",
     "portal.transactions": "Transactions",
     "portal.agents": "AI Agents",
     "portal.referral": "Referral",

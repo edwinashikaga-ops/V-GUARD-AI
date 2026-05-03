@@ -1,9 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm vite build",
+  "buildCommand": "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm vite build --mode production",
   "outputDirectory": "dist/public",
   "installCommand": "npm install -g pnpm && pnpm install --no-frozen-lockfile",
   "framework": null,
+  "env": {
+    "NODE_ENV": "production"
+  },
   "rewrites": [
     {
       "source": "/(.*)",

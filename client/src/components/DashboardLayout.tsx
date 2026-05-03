@@ -21,15 +21,19 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LayoutDashboard, LogOut, PanelLeft, Users, TrendingUp, Package, BarChart3 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+const getMenuItems = (t: (key: string) => string) => [
+  { icon: LayoutDashboard, label: t("portal.dashboard"), path: "/portal/dashboard", key: "dashboard" },
+  { icon: TrendingUp, label: t("portal.roi") || "ROI", path: "/roi", key: "roi" },
+  { icon: Package, label: t("portal.produk") || "Produk", path: "/produk", key: "produk" },
+  { icon: BarChart3, label: t("portal.transactions"), path: "/portal/transactions", key: "transactions" },
+  { icon: Users, label: t("portal.agents"), path: "/portal/agents", key: "agents" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -47,6 +51,7 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -107,11 +112,13 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const menuItems = getMenuItems(t);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
 
@@ -170,8 +177,8 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                  <span className="font-semibold tracking-tight truncate text-cyan-400">
+                    V-Guard AI
                   </span>
                 </div>
               ) : null}
@@ -183,15 +190,19 @@ function DashboardLayoutContent({
               {menuItems.map(item => {
                 const isActive = location === item.path;
                 return (
-                  <SidebarMenuItem key={item.path}>
+                  <SidebarMenuItem key={item.key}>
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
+                      className={`h-10 transition-all font-normal ${
+                        isActive ? "bg-cyan-400/10 text-cyan-400" : "text-slate-400 hover:text-slate-300"
+                      }`}
                     >
                       <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        className={`h-4 w-4 ${
+                          isActive ? "text-cyan-400" : "text-slate-400"
+                        }`}
                       />
                       <span>{item.label}</span>
                     </SidebarMenuButton>

@@ -1,14 +1,18 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, TrendingUp, Users, Activity, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
+import VisionaryAgent from "@/components/admin/agents/visionary";
 
 export default function ClientDashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [demoTimeLeft, setDemoTimeLeft] = useState(15 * 60);
   const isDemoMode = user?.tier === "DEMO";
+  const isVUltra = user?.tier === "V-ULTRA";
 
   useEffect(() => {
     if (!isDemoMode) return;
@@ -35,7 +39,7 @@ export default function ClientDashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Dashboard Klien</h1>
+            <h1 className="text-4xl font-bold text-white mb-2">{t("dashboard.title")}</h1>
             <p className="text-slate-400">Selamat datang, {user?.name || "Guest"}</p>
           </div>
           <div className="text-right">
@@ -139,6 +143,20 @@ export default function ClientDashboard() {
             ))}
           </div>
         </Card>
+
+        {/* Visionary Agent Panel (V-ULTRA Only) */}
+        {isVUltra && (
+          <div className="mt-8">
+            <VisionaryAgent
+              clientId={user?.id || "demo-client"}
+              configOverrides={{
+                syncIntervalMs: 15_000,
+                anomalyThreshold: 40,
+                cameraId: "CAM-01",
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
