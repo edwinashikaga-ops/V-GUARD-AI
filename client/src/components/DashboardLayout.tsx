@@ -29,11 +29,11 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const getMenuItems = (t: (key: string) => string) => [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/portal/dashboard", key: "dashboard" },
-  { icon: TrendingUp, label: "ROI Calculator", path: "/roi", key: "roi" },
-  { icon: Package, label: "Produk", path: "/produk", key: "produk" },
-  { icon: BarChart3, label: "Transaksi", path: "/portal/transactions", key: "transactions" },
-  { icon: Users, label: "AI Agents", path: "/portal/agents", key: "agents" },
+  { icon: LayoutDashboard, label: t("portal.dashboard"), path: "/portal/dashboard", key: "dashboard" },
+  { icon: TrendingUp, label: t("portal.roi"), path: "/roi", key: "roi" },
+  { icon: Package, label: t("portal.produk"), path: "/produk", key: "produk" },
+  { icon: BarChart3, label: t("portal.transactions"), path: "/portal/transactions", key: "transactions" },
+  { icon: Users, label: t("portal.agents"), path: "/portal/agents", key: "agents" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
