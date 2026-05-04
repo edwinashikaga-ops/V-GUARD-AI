@@ -5,10 +5,16 @@ import { SentinelChatbot } from "@/components/SentinelChatbot";
 import LiveProofFraudDetection from "@/components/LiveProofFraudDetection";
 import { useLocation } from "wouter";
 import { Shield, TrendingUp, Zap, Users, Lock, BarChart3, MessageCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const { t } = useLanguage();
   const [, setLocation] = useLocation();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const features = [
     {
@@ -43,6 +49,8 @@ export default function Home() {
     },
   ];
 
+  if (!isMounted) return null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
       {/* Navigation */}
@@ -55,19 +63,18 @@ export default function Home() {
               onClick={() => setLocation("/pricing")}
               className="text-slate-300 hover:text-cyan-400"
             >
-              {t("nav.pricing")}
+              Pricing
             </Button>
             <Button
               onClick={() => setLocation("/portal/dashboard")}
               className="bg-cyan-500 hover:bg-cyan-600"
             >
-              {t("nav.portal")}
+              Portal Login
             </Button>
             <Button
               variant="outline"
               className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 gap-2"
               onClick={() => {
-                // Open customer service chat or contact form
                 window.open("https://wa.me/6282122190885", "_blank");
               }}
             >

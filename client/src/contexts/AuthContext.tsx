@@ -30,25 +30,27 @@ const MOCK_USER: ClientUser = {
 };
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  // Force mock user and loading false for emergency bypass
-  const [user, setUser] = useState<ClientUser | null>(MOCK_USER);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<ClientUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount (disabled for bypass)
+  // Load user from localStorage on mount
   useEffect(() => {
-    /*
-    const stored = localStorage.getItem("vguard_user");
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch (error) {
-        console.error("Failed to parse stored user:", error);
-        localStorage.removeItem("vguard_user");
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("vguard_user");
+      if (stored) {
+        try {
+          setUser(JSON.parse(stored));
+        } catch (error) {
+          console.error("Failed to parse stored user:", error);
+          localStorage.removeItem("vguard_user");
+          setUser(MOCK_USER);
+        }
+      } else {
+        setUser(MOCK_USER);
       }
+    } else {
+      setUser(MOCK_USER);
     }
-    setIsLoading(false);
-    */
-    setUser(MOCK_USER);
     setIsLoading(false);
   }, []);
 
@@ -68,7 +70,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(true);
     try {
       setUser(null);
-      localStorage.removeItem("vguard_user");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("vguard_user");
+      }
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -80,8 +84,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: true, // Always true for bypass
-        isLoading: false,      // Always false for bypass
+        isAuthenticated: !!user,
+        isLoading,
         login,
         logout,
       }}

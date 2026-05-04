@@ -19,8 +19,15 @@ export default function LiveProofFraudDetection() {
   const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
   const [fraudDetected, setFraudDetected] = useState(false);
   const [receiptStamped, setReceiptStamped] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     let index = 0;
     const interval = setInterval(() => {
       if (index < LOG_ENTRIES.length) {
@@ -42,7 +49,9 @@ export default function LiveProofFraudDetection() {
     }, 800);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isMounted]);
+
+  if (!isMounted) return null;
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">

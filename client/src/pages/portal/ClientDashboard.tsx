@@ -10,17 +10,23 @@ import VisionaryAgent from "@/components/admin/agents/visionary";
 export default function ClientDashboard() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const [isMounted, setIsMounted] = useState(false);
   const [demoTimeLeft, setDemoTimeLeft] = useState(15 * 60);
-  const isDemoMode = user?.tier === "DEMO";
-  const isVUltra = user?.tier === "V-ULTRA" || true; // Force active for final deployment as requested
 
   useEffect(() => {
-    if (!isDemoMode) return;
+    setIsMounted(true);
+  }, []);
+
+  const isDemoMode = user?.tier === "DEMO";
+  const isVUltra = user?.tier === "V-ULTRA" || true;
+
+  useEffect(() => {
+    if (!isMounted || !isDemoMode) return;
     const interval = setInterval(() => {
       setDemoTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
     return () => clearInterval(interval);
-  }, [isDemoMode]);
+  }, [isMounted, isDemoMode]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -33,6 +39,8 @@ export default function ClientDashboard() {
     { id: 2, rule: "R2", name: "VOID Rate Spike", severity: "HIGH", timestamp: new Date(Date.now() - 300000), cashier: "Kasir 3" },
     { id: 3, rule: "R4", name: "Balance Mismatch", severity: "MEDIUM", timestamp: new Date(Date.now() - 600000), cashier: "Kasir 2" },
   ];
+
+  if (!isMounted) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-8">
@@ -148,7 +156,7 @@ export default function ClientDashboard() {
         {isVUltra && (
           <div className="mt-8">
             <VisionaryAgent
-              clientId={user?.id || "demo-client"}
+              clientId={user?.clientId || "demo-client"}
               configOverrides={{
                 syncIntervalMs: 15_000,
                 anomalyThreshold: 40,
