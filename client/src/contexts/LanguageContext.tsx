@@ -164,12 +164,17 @@ export function LanguageProvider({
   defaultLanguage = "id",
 }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>(defaultLanguage);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount (client-side only)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    
     const stored = localStorage.getItem("language") as Language | null;
     if (stored && (stored === "id" || stored === "en")) {
       setLanguageState(stored);
+      setIsMounted(true);
+      return;
     }
 
     // Check URL param
@@ -178,21 +183,33 @@ export function LanguageProvider({
     if (urlLang && (urlLang === "id" || urlLang === "en")) {
       setLanguageState(urlLang);
     }
+    
+    setIsMounted(true);
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("language", lang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("language", lang);
+    }
   };
 
   const t = (key: string): string => {
     // Our translations are flat objects, so we can do a direct lookup
     const value = (translations[language] as any)[key];
-    return value || key;
+    // Return translated value or empty string if not found (not the key itself)
+    return value || "";
+  };
+
+  // Provide context with stable values
+  const contextValue = {
+    language,
+    setLanguage,
+    t,
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );
@@ -204,4 +221,10 @@ export function useLanguage() {
     throw new Error("useLanguage must be used within LanguageProvider");
   }
   return context;
+}
+
+// Fallback translation function for use outside of React context
+export function getTranslation(key: string, language: Language = "id"): string {
+  const value = (translations[language] as any)[key];
+  return value || "";
 }

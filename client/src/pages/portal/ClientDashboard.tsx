@@ -12,13 +12,29 @@ export default function ClientDashboard() {
   const { t } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
   const [demoTimeLeft, setDemoTimeLeft] = useState(15 * 60);
+  const [currentTime, setCurrentTime] = useState<string>("");
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isVUltra, setIsVUltra] = useState(false);
 
+  // Set mounted flag and initialize tier gating
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    // Initialize tier gating after mount
+    if (user) {
+      setIsDemoMode(user.tier === "DEMO");
+      setIsVUltra(user.tier === "V-ULTRA" || true);
+    }
+  }, [user]);
 
-  const isDemoMode = user?.tier === "DEMO";
-  const isVUltra = user?.tier === "V-ULTRA" || true;
+  // Update current time only after mount
+  useEffect(() => {
+    if (!isMounted) return;
+    setCurrentTime(new Date().toLocaleTimeString("id-ID"));
+    const interval = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString("id-ID"));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isMounted]);
 
   useEffect(() => {
     if (!isMounted || !isDemoMode) return;
@@ -34,11 +50,12 @@ export default function ClientDashboard() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const mockAlerts = [
+  // Generate mock alerts with timestamps only after mount
+  const mockAlerts = isMounted ? [
     { id: 1, rule: "R6", name: "Rapid VOID", severity: "CRITICAL", timestamp: new Date(), cashier: "Kasir 1" },
     { id: 2, rule: "R2", name: "VOID Rate Spike", severity: "HIGH", timestamp: new Date(Date.now() - 300000), cashier: "Kasir 3" },
     { id: 3, rule: "R4", name: "Balance Mismatch", severity: "MEDIUM", timestamp: new Date(Date.now() - 600000), cashier: "Kasir 2" },
-  ];
+  ] : [];
 
   if (!isMounted) return null;
 
@@ -114,7 +131,7 @@ export default function ClientDashboard() {
               <Clock className="w-5 h-5 text-cyan-400" />
               <h3 className="text-lg font-semibold text-white">Waktu Real-Time</h3>
             </div>
-            <p className="text-3xl font-bold text-cyan-400">{new Date().toLocaleTimeString("id-ID")}</p>
+            <p className="text-3xl font-bold text-cyan-400">{currentTime || "--:--:--"}</p>
           </Card>
           <Card className="bg-slate-800 border-slate-700 p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Status Sistem</h3>

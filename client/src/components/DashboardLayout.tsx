@@ -65,10 +65,22 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
-  });
+  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Load sidebar width from localStorage on mount (client-side only)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+      if (saved) {
+        const width = parseInt(saved, 10);
+        if (width >= MIN_WIDTH && width <= MAX_WIDTH) {
+          setSidebarWidth(width);
+        }
+      }
+    }
+    setIsMounted(true);
+  }, []);
   
   // Disable auth loading and redirect for client review
   // const { loading, user } = useAuth();
@@ -77,11 +89,15 @@ export default function DashboardLayout({
   
   const { t } = useLanguage();
 
+  // Save sidebar width to localStorage on change (client-side only)
   useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
-  }, [sidebarWidth]);
+    if (isMounted && typeof window !== "undefined") {
+      localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+    }
+  }, [sidebarWidth, isMounted]);
 
-  if (loading) {
+  // Don't render until mounted to avoid hydration mismatch
+  if (!isMounted || loading) {
     return <DashboardLayoutSkeleton />
   }
 
@@ -122,7 +138,7 @@ export default function DashboardLayout({
         } as CSSProperties
       }
     >
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+      <DashboardLayoutContent setSidebarWidth={setSidebarWidth} isMounted={isMounted}>
         {children}
       </DashboardLayoutContent>
     </SidebarProvider>
@@ -132,11 +148,13 @@ export default function DashboardLayout({
 type DashboardLayoutContentProps = {
   children: React.ReactNode;
   setSidebarWidth: (width: number) => void;
+  isMounted: boolean;
 };
 
 function DashboardLayoutContent({
   children,
   setSidebarWidth,
+  isMounted,
 }: DashboardLayoutContentProps) {
   // Use mock user and dummy logout for client review
   // const { user, logout } = useAuth();

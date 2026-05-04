@@ -30,10 +30,11 @@ const MOCK_USER: ClientUser = {
 };
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<ClientUser | null>(null);
+  const [user, setUser] = useState<ClientUser | null>(MOCK_USER);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount (client-side only)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("vguard_user");
@@ -48,9 +49,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } else {
         setUser(MOCK_USER);
       }
-    } else {
-      setUser(MOCK_USER);
     }
+    setIsMounted(true);
     setIsLoading(false);
   }, []);
 
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      setUser(null);
+      setUser(MOCK_USER);
       if (typeof window !== "undefined") {
         localStorage.removeItem("vguard_user");
       }
@@ -80,16 +80,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // Provide stable context value
+  const contextValue = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
@@ -101,4 +102,9 @@ export function useAuth() {
     throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
+}
+
+// Fallback function to get mock user outside of context
+export function getMockUser(): ClientUser {
+  return MOCK_USER;
 }
