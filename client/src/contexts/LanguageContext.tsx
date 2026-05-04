@@ -18,17 +18,38 @@ const translations = {
     // Navigation
     "nav.home": "Beranda",
     "nav.pricing": "Harga",
-    "nav.portal": "Portal",
+    "nav.roi": "ROI",
+    "nav.portal": "Portal Klien",
     "nav.login": "Masuk",
     "nav.logout": "Keluar",
     "nav.language": "Bahasa",
+    "nav.customer_service": "Layanan Pelanggan",
 
     // Home Page
-    "home.hero.title": "Deteksi Fraud Real-Time untuk UMKM Indonesia",
+    "home.hero.title": "Deteksi Kecurangan Real-Time untuk UMKM Indonesia",
     "home.hero.subtitle":
       "Lindungi bisnis Anda dengan AI-powered fraud detection dan business intelligence",
     "home.hero.cta": "Mulai Gratis",
     "home.hero.demo": "Lihat Demo",
+    "home.trust": "Dipercaya oleh 500+ bisnis di Indonesia",
+    "home.features.title": "Fitur Unggulan",
+    "home.cta.title": "Siap Melindungi Bisnis Anda?",
+    "home.cta.subtitle": "Mulai dengan demo gratis 15 menit hari ini",
+    "home.cta.button": "Mulai Sekarang",
+
+    // Features
+    "feature.fraud.title": "Deteksi Kecurangan R1-R6",
+    "feature.fraud.desc": "Deteksi kecurangan real-time dengan 6 aturan canggih",
+    "feature.agents.title": "Tim Agen AI (10 Squad)",
+    "feature.agents.desc": "10 agen AI untuk berbagai fungsi bisnis",
+    "feature.monitoring.title": "Pemantauan Langsung",
+    "feature.monitoring.desc": "Pantau transaksi dan anomali secara langsung",
+    "feature.roles.title": "Akses Multi-Role",
+    "feature.roles.desc": "Klien, agen referral, investor, admin",
+    "feature.secure.title": "Aman & Terenkripsi",
+    "feature.secure.desc": "Enkripsi end-to-end dan siap kepatuhan",
+    "feature.analytics.title": "Analitik Lanjutan",
+    "feature.analytics.desc": "Dashboard analitik dan pelaporan lengkap",
 
     // Pricing
     "pricing.title": "Paket Harga V-Guard AI",
@@ -37,40 +58,34 @@ const translations = {
     "pricing.setup": "Biaya Setup",
     "pricing.features": "Fitur Unggulan",
     "pricing.cta": "Hubungi WhatsApp",
+    "pricing.popular": "POPULER",
+    "pricing.premium": "PREMIUM",
+    "pricing.comparison": "Perbandingan Fitur Lengkap",
 
     // Portal
     "portal.dashboard": "Dashboard",
     "portal.roi": "ROI Calculator",
-    "portal.produk": "Produk",
+    "portal.produk": "Daftar Harga",
     "portal.transactions": "Transaksi",
-    "portal.agents": "AI Agents",
+    "portal.agents": "Tim Agen AI",
     "portal.referral": "Referral",
     "portal.investor": "Investor",
     "portal.admin": "Admin",
+    "portal.welcome": "Selamat Datang",
+    "portal.tier": "Paket",
 
-    // Dashboard
-    "dashboard.title": "Dashboard Klien",
-    "dashboard.omset": "Total Omset",
-    "dashboard.transactions": "Transaksi",
-    "dashboard.anomalies": "Anomali",
-    "dashboard.cashiers": "Kasir",
-    "dashboard.status": "Status Sistem",
+    // ROI Calculator
+    "roi.title": "Kalkulator Simulasi Keuntungan/Kebocoran Dana",
+    "roi.subtitle": "Hitung potensi penghematan dengan V-Guard AI",
+    "roi.revenue": "Omset Bulanan",
+    "roi.leakage": "Estimasi Kebocoran (Fraud)",
+    "roi.result": "Potensi Dana Terselamatkan",
 
-    // Fraud Rules
-    "fraud.r1": "VOID Direct Flag",
-    "fraud.r2": "VOID Rate Spike",
-    "fraud.r3": "Duplicate Transaction",
-    "fraud.r4": "Balance Mismatch",
-    "fraud.r5": "Off-Hours Transaction",
-    "fraud.r6": "Rapid VOID",
-
-    // Tiers
-    "tier.demo": "DEMO",
-    "tier.vlite": "V-LITE",
-    "tier.vpro": "V-PRO",
-    "tier.vadvance": "V-ADVANCE",
-    "tier.velite": "V-ELITE",
-    "tier.vultra": "V-ULTRA",
+    // Terms
+    "term.fraud_detection": "Deteksi Kecurangan",
+    "term.realtime_monitoring": "Pemantauan Langsung",
+    "term.ai_agent_squad": "Tim Agen AI",
+    "term.void_rate": "Tingkat Pembatalan (VOID)",
 
     // Common
     "common.loading": "Memuat...",
@@ -87,10 +102,12 @@ const translations = {
     // Navigation
     "nav.home": "Home",
     "nav.pricing": "Pricing",
-    "nav.portal": "Portal",
+    "nav.roi": "ROI",
+    "nav.portal": "Client Portal",
     "nav.login": "Login",
     "nav.logout": "Logout",
     "nav.language": "Language",
+    "nav.customer_service": "Customer Service",
 
     // Home Page
     "home.hero.title": "Real-Time Fraud Detection for Indonesian SMEs",
@@ -98,6 +115,25 @@ const translations = {
       "Protect your business with AI-powered fraud detection and business intelligence",
     "home.hero.cta": "Start Free",
     "home.hero.demo": "View Demo",
+    "home.trust": "Trusted by 500+ businesses in Indonesia",
+    "home.features.title": "Key Features",
+    "home.cta.title": "Ready to Protect Your Business?",
+    "home.cta.subtitle": "Start with a free 15-minute demo today",
+    "home.cta.button": "Start Now",
+
+    // Features
+    "feature.fraud.title": "Fraud Detection R1-R6",
+    "feature.fraud.desc": "Real-time fraud detection with 6 advanced rules",
+    "feature.agents.title": "AI Agent Squad (10 Squad)",
+    "feature.agents.desc": "10 AI agents for various business functions",
+    "feature.monitoring.title": "Real-time Monitoring",
+    "feature.monitoring.desc": "Monitor transactions and anomalies in real-time",
+    "feature.roles.title": "Multi-Role Access",
+    "feature.roles.desc": "Client, referral agent, investor, admin",
+    "feature.secure.title": "Secure & Encrypted",
+    "feature.secure.desc": "End-to-end encryption and compliance ready",
+    "feature.analytics.title": "Advanced Analytics",
+    "feature.analytics.desc": "Complete analytics dashboard and reporting",
 
     // Pricing
     "pricing.title": "V-Guard AI Pricing Plans",
@@ -106,40 +142,34 @@ const translations = {
     "pricing.setup": "Setup Fee",
     "pricing.features": "Key Features",
     "pricing.cta": "Contact WhatsApp",
+    "pricing.popular": "POPULAR",
+    "pricing.premium": "PREMIUM",
+    "pricing.comparison": "Full Feature Comparison",
 
     // Portal
     "portal.dashboard": "Dashboard",
     "portal.roi": "ROI Calculator",
-    "portal.produk": "Products",
+    "portal.produk": "Price List",
     "portal.transactions": "Transactions",
-    "portal.agents": "AI Agents",
+    "portal.agents": "AI Agent Squad",
     "portal.referral": "Referral",
     "portal.investor": "Investor",
     "portal.admin": "Admin",
+    "portal.welcome": "Welcome",
+    "portal.tier": "Plan",
 
-    // Dashboard
-    "dashboard.title": "Client Dashboard",
-    "dashboard.omset": "Total Revenue",
-    "dashboard.transactions": "Transactions",
-    "dashboard.anomalies": "Anomalies",
-    "dashboard.cashiers": "Cashiers",
-    "dashboard.status": "System Status",
+    // ROI Calculator
+    "roi.title": "Profit/Loss Simulation Calculator",
+    "roi.subtitle": "Calculate potential savings with V-Guard AI",
+    "roi.revenue": "Monthly Revenue",
+    "roi.leakage": "Estimated Leakage (Fraud)",
+    "roi.result": "Potential Funds Saved",
 
-    // Fraud Rules
-    "fraud.r1": "VOID Direct Flag",
-    "fraud.r2": "VOID Rate Spike",
-    "fraud.r3": "Duplicate Transaction",
-    "fraud.r4": "Balance Mismatch",
-    "fraud.r5": "Off-Hours Transaction",
-    "fraud.r6": "Rapid VOID",
-
-    // Tiers
-    "tier.demo": "DEMO",
-    "tier.vlite": "V-LITE",
-    "tier.vpro": "V-PRO",
-    "tier.vadvance": "V-ADVANCE",
-    "tier.velite": "V-ELITE",
-    "tier.vultra": "V-ULTRA",
+    // Terms
+    "term.fraud_detection": "Fraud Detection",
+    "term.realtime_monitoring": "Real-time Monitoring",
+    "term.ai_agent_squad": "AI Agent Squad",
+    "term.void_rate": "Void Rate",
 
     // Common
     "common.loading": "Loading...",
@@ -195,13 +225,10 @@ export function LanguageProvider({
   };
 
   const t = (key: string): string => {
-    // Our translations are flat objects, so we can do a direct lookup
     const value = (translations[language] as any)[key];
-    // Return translated value or empty string if not found (not the key itself)
-    return value || "";
+    return value || key; // Return key if not found to help debugging
   };
 
-  // Provide context with stable values
   const contextValue = {
     language,
     setLanguage,
@@ -223,8 +250,7 @@ export function useLanguage() {
   return context;
 }
 
-// Fallback translation function for use outside of React context
 export function getTranslation(key: string, language: Language = "id"): string {
   const value = (translations[language] as any)[key];
-  return value || "";
+  return value || key;
 }

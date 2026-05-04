@@ -22,7 +22,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { LayoutDashboard, LogOut, PanelLeft, Users, TrendingUp, Package, BarChart3, Lock } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, TrendingUp, Package, BarChart3, Lock, Globe, Home } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -83,7 +83,6 @@ export default function DashboardLayout({
   }, []);
   
   // Disable auth loading and redirect for client review
-  // const { loading, user } = useAuth();
   const loading = false;
   const user = MOCK_USER;
   
@@ -100,35 +99,6 @@ export default function DashboardLayout({
   if (!isMounted || loading) {
     return <DashboardLayoutSkeleton />
   }
-
-  // Auth check disabled for emergency client review
-  /*
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <div className="flex flex-col items-center gap-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-center">
-              Sign in to continue
-            </h1>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
-            </p>
-          </div>
-          <Button
-            onClick={() => {
-              window.location.href = getLoginUrl();
-            }}
-            size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all"
-          >
-            Sign in
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  */
 
   return (
     <SidebarProvider
@@ -156,12 +126,10 @@ function DashboardLayoutContent({
   setSidebarWidth,
   isMounted,
 }: DashboardLayoutContentProps) {
-  // Use mock user and dummy logout for client review
-  // const { user, logout } = useAuth();
   const user = MOCK_USER;
   const logout = () => { console.log("Logout disabled during emergency bypass"); };
   
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -239,17 +207,17 @@ function DashboardLayoutContent({
   return (
     <>
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
-            <DialogTitle>Admin Access Required</DialogTitle>
-            <DialogDescription>
-              Enter the password to access the Admin panel.
+            <DialogTitle>{language === "id" ? "Akses Admin Diperlukan" : "Admin Access Required"}</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {language === "id" ? "Masukkan kata sandi untuk mengakses panel Admin." : "Enter the password to access the Admin panel."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               type="password"
-              placeholder="Enter password"
+              placeholder={language === "id" ? "Masukkan kata sandi" : "Enter password"}
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
               onKeyPress={(e) => {
@@ -257,20 +225,21 @@ function DashboardLayoutContent({
                   handlePasswordSubmit();
                 }
               }}
+              className="bg-slate-800 border-slate-700 text-white"
             />
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => setShowPasswordDialog(false)}
-                className="flex-1"
+                className="flex-1 border-slate-700 text-slate-300"
               >
-                Cancel
+                {language === "id" ? "Batal" : "Cancel"}
               </Button>
               <Button
                 onClick={handlePasswordSubmit}
-                className="flex-1 bg-cyan-600 hover:bg-cyan-700"
+                className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
               >
-                Unlock
+                {language === "id" ? "Buka" : "Unlock"}
               </Button>
             </div>
           </div>
@@ -280,17 +249,17 @@ function DashboardLayoutContent({
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
-          className="border-r-0"
+          className="border-r border-slate-800 bg-slate-950"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center">
+          <SidebarHeader className="h-16 justify-center border-b border-slate-800">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                className="h-8 w-8 flex items-center justify-center hover:bg-slate-800 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+                <PanelLeft className="h-4 w-4 text-slate-400" />
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
@@ -302,8 +271,20 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
+          <SidebarContent className="gap-0 bg-slate-950">
+            <SidebarMenu className="px-2 py-4">
+              {/* Home Link */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setLocation("/")}
+                  tooltip={t("nav.home")}
+                  className="h-10 transition-all font-normal text-slate-400 hover:text-slate-300 hover:bg-slate-800"
+                >
+                  <Home className="h-4 w-4" />
+                  <span>{t("nav.home")}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               {menuItems.map(item => {
                 const isActive = location === item.path;
                 return (
@@ -313,7 +294,7 @@ function DashboardLayoutContent({
                       onClick={() => handleMenuClick(item)}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal ${
-                        isActive ? "bg-cyan-400/10 text-cyan-400" : "text-slate-400 hover:text-slate-300"
+                        isActive ? "bg-cyan-400/10 text-cyan-400" : "text-slate-400 hover:text-slate-300 hover:bg-slate-800"
                       }`}
                     >
                       <item.icon
@@ -329,39 +310,59 @@ function DashboardLayoutContent({
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter className="p-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "User"}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate mt-1.5">
-                      {user?.email || "user@vguard.ai"}
-                    </p>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={logout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <SidebarFooter className="p-3 bg-slate-950 border-t border-slate-800">
+            <div className="flex flex-col gap-2">
+              {/* Language Toggle in Sidebar */}
+              {!isCollapsed && (
+                <div className="flex gap-1 p-1 bg-slate-900 rounded-lg mb-2">
+                  <button
+                    onClick={() => setLanguage("id")}
+                    className={`flex-1 py-1 text-xs rounded-md transition ${language === "id" ? "bg-cyan-500 text-white" : "text-slate-400 hover:text-slate-200"}`}
+                  >
+                    ID
+                  </button>
+                  <button
+                    onClick={() => setLanguage("en")}
+                    className={`flex-1 py-1 text-xs rounded-md transition ${language === "en" ? "bg-cyan-500 text-white" : "text-slate-400 hover:text-slate-200"}`}
+                  >
+                    EN
+                  </button>
+                </div>
+              )}
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-slate-800 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Avatar className="h-9 w-9 border border-slate-700 shrink-0">
+                      <AvatarFallback className="text-xs font-medium bg-slate-800 text-slate-300">
+                        {user?.name?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+                      <p className="text-sm font-medium truncate leading-none text-slate-200">
+                        {user?.name || "User"}
+                      </p>
+                      <p className="text-xs text-slate-500 truncate mt-1.5">
+                        {user?.email || "user@vguard.ai"}
+                      </p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-slate-900 border-slate-700 text-slate-300">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="cursor-pointer text-red-400 focus:text-red-400 hover:bg-slate-800"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{language === "id" ? "Keluar" : "Sign out"}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </SidebarFooter>
         </Sidebar>
         <div
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
+          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-cyan-500/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
           onMouseDown={() => {
             if (isCollapsed) return;
             setIsResizing(true);
@@ -370,22 +371,27 @@ function DashboardLayoutContent({
         />
       </div>
 
-      <SidebarInset>
+      <SidebarInset className="bg-slate-950">
         {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+          <div className="flex border-b border-slate-800 h-14 items-center justify-between bg-slate-900/95 px-2 backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
+              <SidebarTrigger className="h-9 w-9 rounded-lg bg-slate-800 text-slate-300" />
               <div className="flex items-center gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-foreground">
+                  <span className="tracking-tight text-slate-200">
                     {activeMenuItem?.label ?? "Menu"}
                   </span>
                 </div>
               </div>
             </div>
+            <div className="flex gap-2">
+               <Button variant="ghost" size="sm" onClick={() => setLanguage(language === "id" ? "en" : "id")} className="text-slate-400">
+                 {language.toUpperCase()}
+               </Button>
+            </div>
           </div>
         )}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-4 bg-slate-950 text-slate-200">{children}</main>
       </SidebarInset>
     </>
   );

@@ -1,9 +1,15 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, X } from "lucide-react";
+import { Check, X, Globe, MessageCircle } from "lucide-react";
 import { useLocation } from "wouter";
-import { TIERS, AGENTS, FRAUD_RULE_TIERS } from "@shared/constants";
+import { TIERS } from "@shared/constants";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const tierOrder = ["V-LITE", "V-PRO", "V-ADVANCE", "V-ELITE", "V-ULTRA"];
 const features = [
@@ -20,7 +26,7 @@ const features = [
 ];
 
 export default function Pricing() {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [, setLocation] = useLocation();
 
   const hasFeature = (tier: string, feature: string) => {
@@ -32,13 +38,70 @@ export default function Pricing() {
       "V-ULTRA": features.map((f) => f.key),
     };
     
-    // Ensure tier exists in tierFeatures, otherwise default to V-LITE or empty
     const activeTier = tier && tierFeatures[tier] ? tier : "V-LITE";
     return tierFeatures[activeTier].includes(feature);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+      {/* Navigation */}
+      <nav className="border-b border-slate-700 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="text-2xl font-bold text-cyan-400 cursor-pointer" onClick={() => setLocation("/")}>V-Guard AI</div>
+          <div className="flex gap-4 items-center">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/")}
+              className="text-slate-300 hover:text-cyan-400"
+            >
+              {t("nav.home")}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/portal/investor")}
+              className="text-slate-300 hover:text-cyan-400"
+            >
+              {t("nav.roi")}
+            </Button>
+            <Button
+              onClick={() => setLocation("/portal/dashboard")}
+              className="bg-cyan-500 hover:bg-cyan-600"
+            >
+              {t("nav.portal")}
+            </Button>
+            
+            {/* Language Toggle */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 gap-2">
+                  <Globe className="w-4 h-4" />
+                  {language.toUpperCase()}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700 text-slate-300">
+                <DropdownMenuItem onClick={() => setLanguage("id")} className="hover:bg-slate-800 cursor-pointer">
+                  Bahasa Indonesia
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage("en")} className="hover:bg-slate-800 cursor-pointer">
+                  English
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button
+              variant="outline"
+              className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 gap-2 hidden md:flex"
+              onClick={() => {
+                window.open("https://wa.me/6282122190885", "_blank");
+              }}
+            >
+              <MessageCircle className="w-4 h-4" />
+              {t("nav.customer_service")}
+            </Button>
+          </div>
+        </div>
+      </nav>
+
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl font-bold text-white text-center mb-4">
@@ -66,7 +129,7 @@ export default function Pricing() {
               >
                 {isPopular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    {tier === "V-PRO" ? "POPULER" : "PREMIUM"}
+                    {tier === "V-PRO" ? t("pricing.popular") : t("pricing.premium")}
                   </div>
                 )}
 
@@ -86,7 +149,7 @@ export default function Pricing() {
 
                 <div className="mb-6 pb-6 border-b border-slate-700">
                   <p className="text-sm text-slate-300">
-                    {agentCount} AI Agents
+                    {agentCount} {t("portal.agents")}
                   </p>
                 </div>
 
@@ -99,7 +162,7 @@ export default function Pricing() {
                       "id-ID"
                     )}`;
                     window.open(
-                      `https://wa.me/62812345678?text=${encodeURIComponent(
+                      `https://wa.me/6282122190885?text=${encodeURIComponent(
                         message
                       )}`,
                       "_blank"
@@ -138,7 +201,7 @@ export default function Pricing() {
       {/* Feature Comparison */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h2 className="text-3xl font-bold text-white mb-8">
-          Perbandingan Fitur Lengkap
+          {t("pricing.comparison")}
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -178,16 +241,16 @@ export default function Pricing() {
         <div className="space-y-4">
           {[
             {
-              q: "Apakah ada trial gratis?",
-              a: "Ya, kami menyediakan demo 15 menit gratis untuk semua tier.",
+              q: language === "id" ? "Apakah ada trial gratis?" : "Is there a free trial?",
+              a: language === "id" ? "Ya, kami menyediakan demo 15 menit gratis untuk semua tier." : "Yes, we provide a free 15-minute demo for all tiers.",
             },
             {
-              q: "Bagaimana cara upgrade tier?",
-              a: "Hubungi tim support kami melalui WhatsApp untuk upgrade tier.",
+              q: language === "id" ? "Bagaimana cara upgrade tier?" : "How to upgrade tier?",
+              a: language === "id" ? "Hubungi tim support kami melalui WhatsApp untuk upgrade tier." : "Contact our support team via WhatsApp to upgrade your tier.",
             },
             {
-              q: "Apakah ada kontrak jangka panjang?",
-              a: "Tidak, semua paket bersifat bulanan dan dapat dibatalkan kapan saja.",
+              q: language === "id" ? "Apakah ada kontrak jangka panjang?" : "Is there a long-term contract?",
+              a: language === "id" ? "Tidak, semua paket bersifat bulanan dan dapat dibatalkan kapan saja." : "No, all plans are monthly and can be cancelled at any time.",
             },
           ].map((faq, index) => (
             <div key={index} className="bg-slate-800 border border-slate-700 p-6 rounded-lg">

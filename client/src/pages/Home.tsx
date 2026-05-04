@@ -4,11 +4,17 @@ import { Card } from "@/components/ui/card";
 import { SentinelChatbot } from "@/components/SentinelChatbot";
 import LiveProofFraudDetection from "@/components/LiveProofFraudDetection";
 import { useLocation } from "wouter";
-import { Shield, TrendingUp, Zap, Users, Lock, BarChart3, MessageCircle } from "lucide-react";
+import { Shield, TrendingUp, Zap, Users, Lock, BarChart3, MessageCircle, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [, setLocation] = useLocation();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -19,33 +25,33 @@ export default function Home() {
   const features = [
     {
       icon: <Shield className="w-8 h-8" />,
-      title: "Fraud Detection R1-R6",
-      description: "Deteksi fraud real-time dengan 6 aturan canggih",
+      title: t("feature.fraud.title"),
+      description: t("feature.fraud.desc"),
     },
     {
       icon: <TrendingUp className="w-8 h-8" />,
-      title: "AI Agents (10 Squad)",
-      description: "10 AI agents untuk berbagai fungsi bisnis",
+      title: t("feature.agents.title"),
+      description: t("feature.agents.desc"),
     },
     {
       icon: <Zap className="w-8 h-8" />,
-      title: "Real-Time Monitoring",
-      description: "Pantau transaksi dan anomali secara real-time",
+      title: t("feature.monitoring.title"),
+      description: t("feature.monitoring.desc"),
     },
     {
       icon: <Users className="w-8 h-8" />,
-      title: "Multi-Role Access",
-      description: "Klien, referral agent, investor, admin",
+      title: t("feature.roles.title"),
+      description: t("feature.roles.desc"),
     },
     {
       icon: <Lock className="w-8 h-8" />,
-      title: "Secure & Encrypted",
-      description: "Enkripsi end-to-end dan compliance ready",
+      title: t("feature.secure.title"),
+      description: t("feature.secure.desc"),
     },
     {
       icon: <BarChart3 className="w-8 h-8" />,
-      title: "Advanced Analytics",
-      description: "Dashboard analytics dan reporting lengkap",
+      title: t("feature.analytics.title"),
+      description: t("feature.analytics.desc"),
     },
   ];
 
@@ -56,30 +62,56 @@ export default function Home() {
       {/* Navigation */}
       <nav className="border-b border-slate-700 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-cyan-400">V-Guard AI</div>
+          <div className="text-2xl font-bold text-cyan-400 cursor-pointer" onClick={() => setLocation("/")}>V-Guard AI</div>
           <div className="flex gap-4 items-center">
             <Button
               variant="ghost"
               onClick={() => setLocation("/pricing")}
               className="text-slate-300 hover:text-cyan-400"
             >
-              Pricing
+              {t("nav.pricing")}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/portal/investor")}
+              className="text-slate-300 hover:text-cyan-400"
+            >
+              {t("nav.roi")}
             </Button>
             <Button
               onClick={() => setLocation("/portal/dashboard")}
               className="bg-cyan-500 hover:bg-cyan-600"
             >
-              Portal Login
+              {t("nav.portal")}
             </Button>
+            
+            {/* Language Toggle */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 gap-2">
+                  <Globe className="w-4 h-4" />
+                  {language.toUpperCase()}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700 text-slate-300">
+                <DropdownMenuItem onClick={() => setLanguage("id")} className="hover:bg-slate-800 cursor-pointer">
+                  Bahasa Indonesia
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage("en")} className="hover:bg-slate-800 cursor-pointer">
+                  English
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button
               variant="outline"
-              className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 gap-2"
+              className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 gap-2 hidden md:flex"
               onClick={() => {
                 window.open("https://wa.me/6282122190885", "_blank");
               }}
             >
               <MessageCircle className="w-4 h-4" />
-              Customer Service
+              {t("nav.customer_service")}
             </Button>
           </div>
         </div>
@@ -115,7 +147,7 @@ export default function Home() {
         {/* Trust Badge */}
         <div className="text-center mb-20">
           <p className="text-slate-400">
-            Dipercaya oleh 500+ bisnis di Indonesia
+            {t("home.trust")}
           </p>
         </div>
       </section>
@@ -126,7 +158,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h2 className="text-4xl font-bold text-white text-center mb-12">
-          Fitur Unggulan
+          {t("home.features.title")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
@@ -148,17 +180,17 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <Card className="bg-gradient-to-r from-cyan-600 to-blue-600 border-0 p-12 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Siap Melindungi Bisnis Anda?
+            {t("home.cta.title")}
           </h2>
           <p className="text-cyan-100 mb-8">
-            Mulai dengan demo gratis 15 menit hari ini
+            {t("home.cta.subtitle")}
           </p>
           <Button
             size="lg"
             className="bg-white text-cyan-600 hover:bg-slate-100"
             onClick={() => setLocation("/portal/dashboard")}
           >
-            Mulai Sekarang
+            {t("home.cta.button")}
           </Button>
         </Card>
       </section>
@@ -168,10 +200,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="text-white font-semibold mb-4">Produk</h3>
+              <h3 className="text-white font-semibold mb-4">{t("portal.produk")}</h3>
               <ul className="space-y-2 text-slate-400 text-sm">
-                <li><a href="#" className="hover:text-cyan-400">Fraud Detection</a></li>
-                <li><a href="#" className="hover:text-cyan-400">AI Agents</a></li>
+                <li><a href="#" className="hover:text-cyan-400">{t("term.fraud_detection")}</a></li>
+                <li><a href="#" className="hover:text-cyan-400">{t("term.ai_agent_squad")}</a></li>
                 <li><a href="#" className="hover:text-cyan-400">Analytics</a></li>
               </ul>
             </div>
@@ -184,7 +216,7 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h3 className="text-white font-semibold mb-4">Hubungi Kami</h3>
+              <h3 className="text-white font-semibold mb-4">{t("nav.customer_service")}</h3>
               <ul className="space-y-2 text-slate-400 text-sm">
                 <li><a href="tel:+6282122190885" className="hover:text-cyan-400">+62 821 2219 0885</a></li>
                 <li><a href="mailto:support@vguard.ai" className="hover:text-cyan-400">support@vguard.ai</a></li>
