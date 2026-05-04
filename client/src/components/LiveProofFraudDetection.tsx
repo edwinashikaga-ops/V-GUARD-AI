@@ -2,40 +2,24 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
 
-const LOG_ENTRIES_ID = [
-  "[AGENT_WATCHDOG]: Memindai POS ID-092...",
-  "[SYSTEM]: Terhubung ke CCTV CAM-07",
+const LOG_ENTRIES = [
+  "[PENGAWAS]: Memindai POS ID-092...",
+  "[SISTEM]: Terhubung ke CCTV CAM-07",
   "[MONITOR]: Transaksi #1001 dimulai",
   "[SCAN]: Menganalisis pola perilaku kasir",
-  "[ALERT]: Aturan R1 (VOID Langsung) Terdeteksi!",
+  "[PERINGATAN]: Aturan R1 (VOID Langsung) Terdeteksi!",
   "[ANOMALI]: VOID Cepat terdeteksi - 3 void dalam 5 detik",
-  "[FRAUD_ALERT]: Skor Keyakinan: 94%",
-  "[ACTION]: Menandai transaksi untuk ditinjau",
-  "[NOTIFICATION]: Peringatan dikirim ke dashboard admin",
-];
-
-const LOG_ENTRIES_EN = [
-  "[AGENT_WATCHDOG]: Scanning POS ID-092...",
-  "[SYSTEM]: Connected to CCTV CAM-07",
-  "[MONITOR]: Transaction #1001 initiated",
-  "[SCAN]: Analyzing cashier behavior patterns",
-  "[ALERT]: Rule R1 (VOID Direct) Detected!",
-  "[ANOMALY]: Rapid VOID detected - 3 voids in 5 seconds",
-  "[FRAUD_ALERT]: Confidence Score: 94%",
-  "[ACTION]: Flagging transaction for review",
-  "[NOTIFICATION]: Alert sent to admin dashboard",
+  "[SKOR_KECURANGAN]: Skor Keyakinan: 94%",
+  "[AKSI]: Menandai transaksi untuk ditinjau",
+  "[NOTIFIKASI]: Peringatan dikirim ke dashboard admin",
 ];
 
 export default function LiveProofFraudDetection() {
-  const { t, language } = useLanguage();
   const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
   const [fraudDetected, setFraudDetected] = useState(false);
   const [receiptStamped, setReceiptStamped] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-
-  const LOG_ENTRIES = language === "id" ? LOG_ENTRIES_ID : LOG_ENTRIES_EN;
 
   useEffect(() => {
     setIsMounted(true);
@@ -65,7 +49,7 @@ export default function LiveProofFraudDetection() {
     }, 800);
 
     return () => clearInterval(interval);
-  }, [isMounted, language]);
+  }, [isMounted]);
 
   if (!isMounted) return null;
 
@@ -73,12 +57,10 @@ export default function LiveProofFraudDetection() {
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold text-white mb-4">
-          Live Proof: {t("term.fraud_detection")}
+          Bukti Langsung: Deteksi Kecurangan
         </h2>
         <p className="text-slate-300 max-w-2xl mx-auto">
-          {language === "id" 
-            ? "Saksikan deteksi kecurangan real-time dengan analisis CCTV bertenaga AI dan pemantauan transaksi yang tersinkronisasi"
-            : "Witness real-time fraud detection with AI-powered CCTV analysis and synchronized transaction monitoring"}
+          Saksikan deteksi kecurangan real-time dengan analisis CCTV canggih dan pemantauan transaksi yang tersinkronisasi
         </p>
       </div>
 
@@ -133,19 +115,19 @@ export default function LiveProofFraudDetection() {
 
         {/* Right Panel: Logs + Receipt */}
         <div className="space-y-6">
-          {/* AI Log Stream */}
+          {/* Log Stream */}
           <Card className="bg-slate-800 border-slate-700 p-4">
             <h3 className="text-sm font-semibold text-cyan-400 mb-3 font-mono">
-              {language === "id" ? "LOG TIM AGEN AI" : "AI AGENT SQUAD LOG"}
+              LOG PEMANTAUAN SISTEM
             </h3>
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {displayedLogs.map((log, idx) => (
                 <div
                   key={idx}
                   className={`text-xs font-mono transition-all ${
-                    log.includes("ALERT") || log.includes("FRAUD") || log.includes("ANOMALI")
+                    log.includes("PERINGATAN") || log.includes("KECURANGAN") || log.includes("ANOMALI")
                       ? "text-red-400"
-                      : log.includes("SYSTEM") || log.includes("MONITOR")
+                      : log.includes("SISTEM") || log.includes("MONITOR")
                       ? "text-cyan-400"
                       : "text-slate-400"
                   }`}
@@ -163,16 +145,16 @@ export default function LiveProofFraudDetection() {
             }`}
           >
             <h3 className="text-sm font-semibold text-white mb-3">
-              {language === "id" ? "Transaksi" : "Transaction"} #1001
+              Transaksi #1001
             </h3>
 
             <div className="space-y-2 text-xs text-slate-300 mb-4 font-mono">
               <div className="flex justify-between">
-                <span>{language === "id" ? "Item 1: Minuman" : "Item 1: Beverage"}</span>
+                <span>Item 1: Minuman</span>
                 <span>Rp 25,000</span>
               </div>
               <div className="flex justify-between">
-                <span>{language === "id" ? "Item 2: Camilan" : "Item 2: Snack"}</span>
+                <span>Item 2: Camilan</span>
                 <span>Rp 15,000</span>
               </div>
               <div className="border-t border-slate-600 pt-2 mt-2 flex justify-between font-semibold">
@@ -185,13 +167,13 @@ export default function LiveProofFraudDetection() {
               <div className="relative h-20">
                 <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
                   <div className="transform -rotate-12 border-4 border-red-600 px-4 py-2 text-red-600 font-black text-2xl uppercase tracking-tighter bg-slate-900/80 backdrop-blur-sm shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-in zoom-in duration-300">
-                    {t("term.fraud_detection").toUpperCase()}
+                    KECURANGAN
                   </div>
                 </div>
                 <div className="opacity-30">
                   <Badge className="bg-red-600 w-full justify-center">
                     <AlertCircle className="w-4 h-4 mr-2" />
-                    {language === "id" ? "Ditandai untuk Ditinjau" : "Flagged for Review"}
+                    Ditandai untuk Ditinjau
                   </Badge>
                 </div>
               </div>
@@ -200,7 +182,7 @@ export default function LiveProofFraudDetection() {
             {!receiptStamped && (
               <Badge className="bg-green-600 w-full justify-center">
                 <CheckCircle className="w-4 h-4 mr-2" />
-                {language === "id" ? "Transaksi Valid" : "Transaction Valid"}
+                Transaksi Valid
               </Badge>
             )}
           </Card>
@@ -212,12 +194,10 @@ export default function LiveProofFraudDetection() {
                 <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-red-400">
-                    {language === "id" ? "Peringatan Kecurangan" : "Fraud Alert"}
+                    Peringatan Kecurangan
                   </p>
                   <p className="text-xs text-red-300 mt-1">
-                    {language === "id" 
-                      ? "VOID Cepat terdeteksi dengan keyakinan 94%. Admin telah diberitahu."
-                      : "Rapid VOID detected with 94% confidence. Admin notified."}
+                    VOID Cepat terdeteksi dengan keyakinan 94%. Admin telah diberitahu.
                   </p>
                 </div>
               </div>
@@ -230,22 +210,22 @@ export default function LiveProofFraudDetection() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
         <Card className="bg-slate-800 border-slate-700 p-6 text-center">
           <div className="text-3xl font-bold text-cyan-400 mb-2">
-            {language === "id" ? "Langsung" : "Real-Time"}
+            Langsung
           </div>
           <p className="text-sm text-slate-400">
-            {language === "id" ? "Deteksi dan peringatan instan dalam milidetik" : "Instant detection and alerting within milliseconds"}
+            Deteksi dan peringatan instan dalam milidetik
           </p>
         </Card>
         <Card className="bg-slate-800 border-slate-700 p-6 text-center">
           <div className="text-3xl font-bold text-cyan-400 mb-2">94%</div>
           <p className="text-sm text-slate-400">
-            {language === "id" ? "Skor keyakinan rata-rata deteksi kecurangan" : "Average fraud detection confidence score"}
+            Skor keyakinan rata-rata deteksi kecurangan
           </p>
         </Card>
         <Card className="bg-slate-800 border-slate-700 p-6 text-center">
-          <div className="text-3xl font-bold text-cyan-400 mb-2">6 {language === "id" ? "Aturan" : "Rules"}</div>
+          <div className="text-3xl font-bold text-cyan-400 mb-2">6 Aturan</div>
           <p className="text-sm text-slate-400">
-            {language === "id" ? "Algoritma deteksi kecurangan berlapis" : "Multi-layered fraud detection algorithms"}
+            Algoritma deteksi kecurangan berlapis
           </p>
         </Card>
       </div>

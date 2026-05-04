@@ -36,13 +36,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-const getMenuItems = (t: (key: string) => string) => [
-  { icon: LayoutDashboard, label: t("portal.dashboard"), path: "/portal/dashboard", key: "dashboard", requiresPassword: false },
-  { icon: TrendingUp, label: t("portal.roi"), path: "/portal/investor", key: "roi", requiresPassword: false },
-  { icon: Package, label: t("portal.produk"), path: "/portal/referral", key: "produk", requiresPassword: false },
-  { icon: BarChart3, label: t("portal.transactions"), path: "/portal/transactions", key: "transactions", requiresPassword: false },
-  { icon: Users, label: t("portal.agents"), path: "/portal/agents", key: "agents", requiresPassword: false },
-  { icon: Lock, label: t("portal.admin"), path: "/portal/admin", key: "admin", requiresPassword: true },
+const getMenuItems = () => [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/portal/dashboard", key: "dashboard", requiresPassword: false },
+  { icon: TrendingUp, label: "ROI Calculator", path: "/portal/investor", key: "roi", requiresPassword: false },
+  { icon: Package, label: "Daftar Harga", path: "/pricing", key: "produk", requiresPassword: false },
+  { icon: BarChart3, label: "Transaksi", path: "/portal/transactions", key: "transactions", requiresPassword: false },
+  { icon: Users, label: "Tim Agen", path: "/portal/agents", key: "agents", requiresPassword: false },
+  { icon: Lock, label: "Admin", path: "/portal/admin", key: "admin", requiresPassword: true },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -86,8 +86,6 @@ export default function DashboardLayout({
   const loading = false;
   const user = MOCK_USER;
   
-  const { t } = useLanguage();
-
   // Save sidebar width to localStorage on change (client-side only)
   useEffect(() => {
     if (isMounted && typeof window !== "undefined") {
@@ -129,13 +127,12 @@ function DashboardLayoutContent({
   const user = MOCK_USER;
   const logout = () => { console.log("Logout disabled during emergency bypass"); };
   
-  const { t, language, setLanguage } = useLanguage();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const menuItems = getMenuItems(t);
+  const menuItems = getMenuItems();
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   
@@ -200,7 +197,7 @@ function DashboardLayoutContent({
       }
     } else {
       setPasswordInput("");
-      alert("Incorrect password. Please try again.");
+      alert("Kata sandi salah. Silakan coba lagi.");
     }
   };
 
@@ -209,15 +206,15 @@ function DashboardLayoutContent({
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent className="sm:max-w-md bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
-            <DialogTitle>{language === "id" ? "Akses Admin Diperlukan" : "Admin Access Required"}</DialogTitle>
+            <DialogTitle>Akses Admin Diperlukan</DialogTitle>
             <DialogDescription className="text-slate-400">
-              {language === "id" ? "Masukkan kata sandi untuk mengakses panel Admin." : "Enter the password to access the Admin panel."}
+              Masukkan kata sandi untuk mengakses panel Admin.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               type="password"
-              placeholder={language === "id" ? "Masukkan kata sandi" : "Enter password"}
+              placeholder="Masukkan kata sandi"
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
               onKeyPress={(e) => {
@@ -233,13 +230,13 @@ function DashboardLayoutContent({
                 onClick={() => setShowPasswordDialog(false)}
                 className="flex-1 border-slate-700 text-slate-300"
               >
-                {language === "id" ? "Batal" : "Cancel"}
+                Batal
               </Button>
               <Button
                 onClick={handlePasswordSubmit}
                 className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
               >
-                {language === "id" ? "Buka" : "Unlock"}
+                Buka
               </Button>
             </div>
           </div>
@@ -264,7 +261,7 @@ function DashboardLayoutContent({
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-semibold tracking-tight truncate text-cyan-400">
-                    V-Guard AI
+                    V-Guard
                   </span>
                 </div>
               ) : null}
@@ -277,11 +274,11 @@ function DashboardLayoutContent({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setLocation("/")}
-                  tooltip={t("nav.home")}
+                  tooltip="Beranda"
                   className="h-10 transition-all font-normal text-slate-400 hover:text-slate-300 hover:bg-slate-800"
                 >
                   <Home className="h-4 w-4" />
-                  <span>{t("nav.home")}</span>
+                  <span>Beranda</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -312,24 +309,6 @@ function DashboardLayoutContent({
 
           <SidebarFooter className="p-3 bg-slate-950 border-t border-slate-800">
             <div className="flex flex-col gap-2">
-              {/* Language Toggle in Sidebar */}
-              {!isCollapsed && (
-                <div className="flex gap-1 p-1 bg-slate-900 rounded-lg mb-2">
-                  <button
-                    onClick={() => setLanguage("id")}
-                    className={`flex-1 py-1 text-xs rounded-md transition ${language === "id" ? "bg-cyan-500 text-white" : "text-slate-400 hover:text-slate-200"}`}
-                  >
-                    ID
-                  </button>
-                  <button
-                    onClick={() => setLanguage("en")}
-                    className={`flex-1 py-1 text-xs rounded-md transition ${language === "en" ? "bg-cyan-500 text-white" : "text-slate-400 hover:text-slate-200"}`}
-                  >
-                    EN
-                  </button>
-                </div>
-              )}
-              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-slate-800 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -354,7 +333,7 @@ function DashboardLayoutContent({
                     className="cursor-pointer text-red-400 focus:text-red-400 hover:bg-slate-800"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>{language === "id" ? "Keluar" : "Sign out"}</span>
+                    <span>Keluar</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -383,11 +362,6 @@ function DashboardLayoutContent({
                   </span>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-2">
-               <Button variant="ghost" size="sm" onClick={() => setLanguage(language === "id" ? "en" : "id")} className="text-slate-400">
-                 {language.toUpperCase()}
-               </Button>
             </div>
           </div>
         )}

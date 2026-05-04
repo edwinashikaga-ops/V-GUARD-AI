@@ -1,32 +1,24 @@
-import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, X, Globe, MessageCircle } from "lucide-react";
+import { Check, X, MessageCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { TIERS } from "@shared/constants";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const tierOrder = ["V-LITE", "V-PRO", "V-ADVANCE", "V-ELITE", "V-ULTRA"];
 const features = [
-  { key: "fraud_rules_r1_r2_r3", label: "Fraud Rules R1-R3" },
-  { key: "fraud_rules_r4_r5_r6", label: "Fraud Rules R4-R6" },
-  { key: "bank_audit", label: "Bank Audit" },
+  { key: "fraud_rules_r1_r2_r3", label: "Aturan Fraud R1-R3" },
+  { key: "fraud_rules_r4_r5_r6", label: "Aturan Fraud R4-R6" },
+  { key: "bank_audit", label: "Audit Bank" },
   { key: "ocr_invoice", label: "OCR Invoice" },
-  { key: "cctv_ai_live", label: "CCTV AI Live" },
-  { key: "multi_branch", label: "Multi-Branch" },
-  { key: "dedicated_server", label: "Dedicated Server" },
+  { key: "cctv_ai_live", label: "CCTV Live" },
+  { key: "multi_branch", label: "Multi-Cabang" },
+  { key: "dedicated_server", label: "Server Khusus" },
   { key: "forensic_deep_scan", label: "Forensic Deep Scan" },
   { key: "white_label", label: "White Label" },
   { key: "neural_network", label: "Neural Network" },
 ];
 
 export default function Pricing() {
-  const { t, language, setLanguage } = useLanguage();
   const [, setLocation] = useLocation();
 
   const hasFeature = (tier: string, feature: string) => {
@@ -43,51 +35,33 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+    <div className="min-h-screen bg-slate-950">
       {/* Navigation */}
       <nav className="border-b border-slate-700 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-cyan-400 cursor-pointer" onClick={() => setLocation("/")}>V-Guard AI</div>
+          <div className="text-2xl font-bold text-cyan-400 cursor-pointer" onClick={() => setLocation("/")}>V-Guard</div>
           <div className="flex gap-4 items-center">
             <Button
               variant="ghost"
               onClick={() => setLocation("/")}
               className="text-slate-300 hover:text-cyan-400"
             >
-              {t("nav.home")}
+              Beranda
             </Button>
             <Button
               variant="ghost"
               onClick={() => setLocation("/portal/investor")}
               className="text-slate-300 hover:text-cyan-400"
             >
-              {t("nav.roi")}
+              ROI Calculator
             </Button>
             <Button
               onClick={() => setLocation("/portal/dashboard")}
               className="bg-cyan-500 hover:bg-cyan-600"
             >
-              {t("nav.portal")}
+              Portal Klien
             </Button>
             
-            {/* Language Toggle */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 gap-2">
-                  <Globe className="w-4 h-4" />
-                  {language.toUpperCase()}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700 text-slate-300">
-                <DropdownMenuItem onClick={() => setLanguage("id")} className="hover:bg-slate-800 cursor-pointer">
-                  Bahasa Indonesia
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage("en")} className="hover:bg-slate-800 cursor-pointer">
-                  English
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             <Button
               variant="outline"
               className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 gap-2 hidden md:flex"
@@ -96,7 +70,7 @@ export default function Pricing() {
               }}
             >
               <MessageCircle className="w-4 h-4" />
-              {t("nav.customer_service")}
+              Layanan Pelanggan
             </Button>
           </div>
         </div>
@@ -105,10 +79,10 @@ export default function Pricing() {
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl font-bold text-white text-center mb-4">
-          {t("pricing.title")}
+          Paket Harga V-Guard
         </h1>
         <p className="text-xl text-slate-300 text-center">
-          {t("pricing.subtitle")}
+          Pilih paket yang sesuai dengan kebutuhan bisnis Anda
         </p>
       </div>
 
@@ -129,7 +103,7 @@ export default function Pricing() {
               >
                 {isPopular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    {tier === "V-PRO" ? t("pricing.popular") : t("pricing.premium")}
+                    {tier === "V-PRO" ? "POPULER" : "PREMIUM"}
                   </div>
                 )}
 
@@ -139,17 +113,17 @@ export default function Pricing() {
                     Rp {tierInfo.monthlyPrice.toLocaleString("id-ID")}
                   </div>
                   <div className="text-sm text-slate-400">
-                    {t("pricing.monthly")}
+                    Per Bulan
                   </div>
                   <div className="text-sm text-slate-500 mt-1">
-                    {t("pricing.setup")}: Rp{" "}
+                    Biaya Setup: Rp{" "}
                     {tierInfo.setupFee.toLocaleString("id-ID")}
                   </div>
                 </div>
 
                 <div className="mb-6 pb-6 border-b border-slate-700">
                   <p className="text-sm text-slate-300">
-                    {agentCount} {t("portal.agents")}
+                    {agentCount} Agen Bisnis
                   </p>
                 </div>
 
@@ -169,7 +143,7 @@ export default function Pricing() {
                     );
                   }}
                 >
-                  {t("pricing.cta")}
+                  Hubungi WhatsApp
                 </Button>
 
                 <div className="space-y-3">
@@ -201,7 +175,7 @@ export default function Pricing() {
       {/* Feature Comparison */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h2 className="text-3xl font-bold text-white mb-8">
-          {t("pricing.comparison")}
+          Perbandingan Fitur Lengkap
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -241,16 +215,16 @@ export default function Pricing() {
         <div className="space-y-4">
           {[
             {
-              q: language === "id" ? "Apakah ada trial gratis?" : "Is there a free trial?",
-              a: language === "id" ? "Ya, kami menyediakan demo 15 menit gratis untuk semua tier." : "Yes, we provide a free 15-minute demo for all tiers.",
+              q: "Apakah ada trial gratis?",
+              a: "Ya, kami menyediakan demo 15 menit gratis untuk semua paket.",
             },
             {
-              q: language === "id" ? "Bagaimana cara upgrade tier?" : "How to upgrade tier?",
-              a: language === "id" ? "Hubungi tim support kami melalui WhatsApp untuk upgrade tier." : "Contact our support team via WhatsApp to upgrade your tier.",
+              q: "Bagaimana cara upgrade paket?",
+              a: "Hubungi tim support kami melalui WhatsApp untuk upgrade paket.",
             },
             {
-              q: language === "id" ? "Apakah ada kontrak jangka panjang?" : "Is there a long-term contract?",
-              a: language === "id" ? "Tidak, semua paket bersifat bulanan dan dapat dibatalkan kapan saja." : "No, all plans are monthly and can be cancelled at any time.",
+              q: "Apakah ada kontrak jangka panjang?",
+              a: "Tidak, semua paket bersifat bulanan dan dapat dibatalkan kapan saja.",
             },
           ].map((faq, index) => (
             <div key={index} className="bg-slate-800 border border-slate-700 p-6 rounded-lg">

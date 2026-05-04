@@ -1,4 +1,3 @@
-import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -6,7 +5,6 @@ import { useState } from "react";
 import { TrendingUp, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export default function Investor() {
-  const { t, language } = useLanguage();
   const [revenue, setRevenue] = useState(100000000); // 100jt default
   const [leakageRate, setLeakageRate] = useState(5); // 5% default
 
@@ -16,15 +14,15 @@ export default function Investor() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">{t("roi.title")}</h1>
-        <p className="text-slate-400">{t("roi.subtitle")}</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Kalkulator Simulasi Keuntungan/Kebocoran Dana</h1>
+        <p className="text-slate-400">Hitung potensi penghematan dengan V-Guard</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="p-6 bg-slate-900 border-slate-800 space-y-8">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <label className="text-slate-300 font-medium">{t("roi.revenue")}</label>
+              <label className="text-slate-300 font-medium">Omset Bulanan</label>
               <span className="text-cyan-400 font-bold">Rp {revenue.toLocaleString("id-ID")}</span>
             </div>
             <Slider
@@ -44,7 +42,7 @@ export default function Investor() {
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <label className="text-slate-300 font-medium">{t("roi.leakage")}</label>
+              <label className="text-slate-300 font-medium">Estimasi Kebocoran (Kecurangan)</label>
               <span className="text-red-400 font-bold">{leakageRate}%</span>
             </div>
             <Slider
@@ -68,10 +66,10 @@ export default function Investor() {
               <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
             <div>
-              <p className="text-slate-400 text-sm mb-1">{t("roi.leakage")}</p>
+              <p className="text-slate-400 text-sm mb-1">Estimasi Kebocoran (Kecurangan)</p>
               <p className="text-2xl font-bold text-white">Rp {leakageAmount.toLocaleString("id-ID")}</p>
               <p className="text-xs text-slate-500 mt-1">
-                {language === "id" ? "Estimasi kerugian per bulan akibat kecurangan" : "Estimated monthly loss due to fraud"}
+                Estimasi kerugian per bulan akibat kecurangan
               </p>
             </div>
           </Card>
@@ -81,10 +79,10 @@ export default function Investor() {
               <ShieldCheck className="w-6 h-6 text-cyan-400" />
             </div>
             <div>
-              <p className="text-cyan-400 text-sm mb-1">{t("roi.result")}</p>
+              <p className="text-cyan-400 text-sm mb-1">Potensi Dana Terselamatkan</p>
               <p className="text-3xl font-bold text-white">Rp {potentialSavings.toLocaleString("id-ID")}</p>
               <p className="text-xs text-cyan-500/60 mt-1">
-                {language === "id" ? "Potensi dana yang dapat diselamatkan dengan V-Guard AI" : "Potential funds saved with V-Guard AI"}
+                Potensi dana yang dapat diselamatkan dengan V-Guard
               </p>
             </div>
           </Card>
@@ -95,9 +93,7 @@ export default function Investor() {
               <h3 className="text-white font-semibold">Analisis ROI</h3>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed">
-              {language === "id" 
-                ? "Dengan mengimplementasikan 6 aturan deteksi kecurangan (R1-R6) dan pemantauan langsung, bisnis Anda dapat menekan tingkat pembatalan (VOID) yang tidak wajar dan mengamankan margin keuntungan secara signifikan."
-                : "By implementing 6 fraud detection rules (R1-R6) and real-time monitoring, your business can suppress unnatural void rates and significantly secure profit margins."}
+              Dengan mengimplementasikan 6 aturan deteksi kecurangan (R1-R6) dan pemantauan langsung, bisnis Anda dapat menekan tingkat pembatalan (VOID) yang tidak wajar dan mengamankan margin keuntungan secara signifikan.
             </p>
           </Card>
         </div>
