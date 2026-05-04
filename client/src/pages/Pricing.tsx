@@ -25,36 +25,16 @@ export default function Pricing() {
 
   const hasFeature = (tier: string, feature: string) => {
     const tierFeatures: Record<string, string[]> = {
-      "V-LITE": [
-        "fraud_rules_r1_r2_r3",
-      ],
-      "V-PRO": [
-        "fraud_rules_r1_r2_r3",
-        "fraud_rules_r4_r5_r6",
-        "bank_audit",
-        "ocr_invoice",
-      ],
-      "V-ADVANCE": [
-        "fraud_rules_r1_r2_r3",
-        "fraud_rules_r4_r5_r6",
-        "bank_audit",
-        "ocr_invoice",
-        "cctv_ai_live",
-        "multi_branch",
-      ],
-      "V-ELITE": [
-        "fraud_rules_r1_r2_r3",
-        "fraud_rules_r4_r5_r6",
-        "bank_audit",
-        "ocr_invoice",
-        "cctv_ai_live",
-        "multi_branch",
-        "dedicated_server",
-        "forensic_deep_scan",
-      ],
+      "V-LITE": ["fraud_rules_r1_r2_r3"],
+      "V-PRO": ["fraud_rules_r1_r2_r3", "fraud_rules_r4_r5_r6", "bank_audit", "ocr_invoice"],
+      "V-ADVANCE": ["fraud_rules_r1_r2_r3", "fraud_rules_r4_r5_r6", "bank_audit", "ocr_invoice", "cctv_ai_live", "multi_branch"],
+      "V-ELITE": ["fraud_rules_r1_r2_r3", "fraud_rules_r4_r5_r6", "bank_audit", "ocr_invoice", "cctv_ai_live", "multi_branch", "dedicated_server", "forensic_deep_scan"],
       "V-ULTRA": features.map((f) => f.key),
     };
-    return tierFeatures[tier]?.includes(feature) || false;
+    
+    // Ensure tier exists in tierFeatures, otherwise default to V-LITE or empty
+    const activeTier = tier && tierFeatures[tier] ? tier : "V-LITE";
+    return tierFeatures[activeTier].includes(feature);
   };
 
   return (
