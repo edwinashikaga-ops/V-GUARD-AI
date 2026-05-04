@@ -286,19 +286,20 @@ export const BUSINESS_HOURS = {
  * HELPER: Check if tier has access to feature
  */
 export function hasFeatureAccess(
-  tier: string,
+  tier: string | undefined | null,
   feature: keyof typeof FEATURE_ACCESS
 ): boolean {
   const allowedTiers = FEATURE_ACCESS[feature];
-  return allowedTiers.includes(tier as any);
+  if (!allowedTiers || !tier) return false;
+  return (allowedTiers as readonly string[]).includes(tier);
 }
 
 /**
  * HELPER: Check if agent is unlocked for tier
  */
-export function isAgentUnlocked(agentId: number, tier: string): boolean {
+export function isAgentUnlocked(agentId: number, tier: string | undefined | null): boolean {
   const agent = AGENTS.find((a) => a.id === agentId);
-  if (!agent) return false;
+  if (!agent || !tier) return false;
 
   const tierOrder = ["DEMO", "V-LITE", "V-PRO", "V-ADVANCE", "V-ELITE", "V-ULTRA"];
   const tierIndex = tierOrder.indexOf(tier);

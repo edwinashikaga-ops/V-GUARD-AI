@@ -186,13 +186,8 @@ export function LanguageProvider({
   };
 
   const t = (key: string): string => {
-    const keys = key.split(".");
-    let value: any = translations[language];
-
-    for (const k of keys) {
-      value = value?.[k];
-    }
-
+    // Our translations are flat objects, so we can do a direct lookup
+    const value = (translations[language] as any)[key];
     return value || key;
   };
 

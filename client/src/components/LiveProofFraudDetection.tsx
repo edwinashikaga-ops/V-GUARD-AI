@@ -71,13 +71,32 @@ export default function LiveProofFraudDetection() {
               <div>{new Date().toLocaleTimeString("id-ID")}</div>
             </div>
 
-            {/* Mockup Image */}
+            {/* CCTV Placeholder Video/Image */}
             <div className="relative w-full aspect-video bg-slate-800 overflow-hidden">
-              <img
-                src="/fraud-detection-mockup.png"
-                alt="CCTV Fraud Detection"
-                className="w-full h-full object-cover"
-              />
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover opacity-60"
+                poster="/fraud-detection-mockup.png"
+              >
+                <source
+                  src="https://cdn.pixabay.com/video/2016/03/31/2565-160166391_large.mp4"
+                  type="video/mp4"
+                />
+                <img
+                  src="/fraud-detection-mockup.png"
+                  alt="CCTV Fraud Detection"
+                  className="w-full h-full object-cover"
+                />
+              </video>
+
+              {/* Overlay Grid Effect */}
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none" />
+
+              {/* Scanline Effect */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent h-20 w-full animate-scan pointer-events-none" />
 
               {/* Glow Effect */}
               <div className="absolute inset-0 border-2 border-cyan-500/30 pointer-events-none" />
@@ -134,9 +153,9 @@ export default function LiveProofFraudDetection() {
             </div>
 
             {receiptStamped && (
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="transform -rotate-45 border-4 border-red-600 px-4 py-2 text-red-600 font-bold text-lg">
+              <div className="relative h-20">
+                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                  <div className="transform -rotate-12 border-4 border-red-600 px-4 py-2 text-red-600 font-black text-2xl uppercase tracking-tighter bg-slate-900/80 backdrop-blur-sm shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-in zoom-in duration-300">
                     FRAUD DETECTED
                   </div>
                 </div>
