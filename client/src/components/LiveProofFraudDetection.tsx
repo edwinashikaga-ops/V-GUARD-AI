@@ -1,0 +1,200 @@
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, CheckCircle } from "lucide-react";
+
+const LOG_ENTRIES = [
+  "[AGENT_WATCHDOG]: Scanning POS ID-092...",
+  "[SYSTEM]: Connected to CCTV CAM-07",
+  "[MONITOR]: Transaction #1001 initiated",
+  "[SCAN]: Analyzing cashier behavior patterns",
+  "[ALERT]: Rule R1 (VOID Direct) Detected!",
+  "[ANOMALY]: Rapid VOID detected - 3 voids in 5 seconds",
+  "[FRAUD_ALERT]: Confidence Score: 94%",
+  "[ACTION]: Flagging transaction for review",
+  "[NOTIFICATION]: Alert sent to admin dashboard",
+];
+
+export default function LiveProofFraudDetection() {
+  const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
+  const [fraudDetected, setFraudDetected] = useState(false);
+  const [receiptStamped, setReceiptStamped] = useState(false);
+
+  useEffect(() => {
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < LOG_ENTRIES.length) {
+        setDisplayedLogs((prev) => [...prev, LOG_ENTRIES[index]]);
+        if (index >= 4) {
+          setFraudDetected(true);
+        }
+        if (index >= 6) {
+          setReceiptStamped(true);
+        }
+        index++;
+      } else {
+        // Reset animation
+        index = 0;
+        setDisplayedLogs([]);
+        setFraudDetected(false);
+        setReceiptStamped(false);
+      }
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-bold text-white mb-4">
+          Live Proof: Fraud Detection in Action
+        </h2>
+        <p className="text-slate-300 max-w-2xl mx-auto">
+          Witness real-time fraud detection with AI-powered CCTV analysis and synchronized transaction monitoring
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* CCTV Video Section */}
+        <div className="lg:col-span-2">
+          <Card className="bg-slate-900 border-2 border-cyan-500 p-0 overflow-hidden relative">
+            {/* Recording Label */}
+            <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse" />
+              <span className="text-red-600 font-bold text-sm tracking-widest">RECORDING</span>
+            </div>
+
+            {/* Camera Info */}
+            <div className="absolute bottom-4 left-4 z-10 text-cyan-400 font-mono text-xs">
+              <div>CAM-07 • 1080P HD</div>
+              <div>{new Date().toLocaleTimeString("id-ID")}</div>
+            </div>
+
+            {/* Mockup Image */}
+            <div className="relative w-full aspect-video bg-slate-800 overflow-hidden">
+              <img
+                src="/fraud-detection-mockup.png"
+                alt="CCTV Fraud Detection"
+                className="w-full h-full object-cover"
+              />
+
+              {/* Glow Effect */}
+              <div className="absolute inset-0 border-2 border-cyan-500/30 pointer-events-none" />
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Panel: Logs + Receipt */}
+        <div className="space-y-6">
+          {/* AI Log Stream */}
+          <Card className="bg-slate-800 border-slate-700 p-4">
+            <h3 className="text-sm font-semibold text-cyan-400 mb-3 font-mono">
+              AGENT WATCHDOG LOG
+            </h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {displayedLogs.map((log, idx) => (
+                <div
+                  key={idx}
+                  className={`text-xs font-mono transition-all ${
+                    log.includes("ALERT") || log.includes("FRAUD")
+                      ? "text-red-400"
+                      : log.includes("SYSTEM") || log.includes("MONITOR")
+                      ? "text-cyan-400"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {log}
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Digital Receipt */}
+          <Card
+            className={`bg-slate-800 border-slate-700 p-4 transition-all ${
+              receiptStamped ? "border-red-600 bg-red-950/20" : ""
+            }`}
+          >
+            <h3 className="text-sm font-semibold text-white mb-3">Transaction #1001</h3>
+
+            <div className="space-y-2 text-xs text-slate-300 mb-4 font-mono">
+              <div className="flex justify-between">
+                <span>Item 1: Beverage</span>
+                <span>Rp 25,000</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Item 2: Snack</span>
+                <span>Rp 15,000</span>
+              </div>
+              <div className="border-t border-slate-600 pt-2 mt-2 flex justify-between font-semibold">
+                <span>Total</span>
+                <span>Rp 40,000</span>
+              </div>
+            </div>
+
+            {receiptStamped && (
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="transform -rotate-45 border-4 border-red-600 px-4 py-2 text-red-600 font-bold text-lg">
+                    FRAUD DETECTED
+                  </div>
+                </div>
+                <div className="opacity-30">
+                  <Badge className="bg-red-600 w-full justify-center">
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Flagged for Review
+                  </Badge>
+                </div>
+              </div>
+            )}
+
+            {!receiptStamped && (
+              <Badge className="bg-green-600 w-full justify-center">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Transaction Valid
+              </Badge>
+            )}
+          </Card>
+
+          {/* Status Indicator */}
+          {fraudDetected && (
+            <Card className="bg-red-950/20 border-red-600 p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-red-400">Fraud Alert</p>
+                  <p className="text-xs text-red-300 mt-1">
+                    Rapid VOID detected with 94% confidence. Admin notified.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Features Highlight */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <Card className="bg-slate-800 border-slate-700 p-6 text-center">
+          <div className="text-3xl font-bold text-cyan-400 mb-2">Real-Time</div>
+          <p className="text-sm text-slate-400">
+            Instant detection and alerting within milliseconds
+          </p>
+        </Card>
+        <Card className="bg-slate-800 border-slate-700 p-6 text-center">
+          <div className="text-3xl font-bold text-cyan-400 mb-2">94%</div>
+          <p className="text-sm text-slate-400">
+            Average fraud detection confidence score
+          </p>
+        </Card>
+        <Card className="bg-slate-800 border-slate-700 p-6 text-center">
+          <div className="text-3xl font-bold text-cyan-400 mb-2">6 Rules</div>
+          <p className="text-sm text-slate-400">
+            Multi-layered fraud detection algorithms
+          </p>
+        </Card>
+      </div>
+    </section>
+  );
+}

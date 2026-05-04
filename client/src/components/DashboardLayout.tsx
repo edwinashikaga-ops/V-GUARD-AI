@@ -22,25 +22,34 @@ import {
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { LayoutDashboard, LogOut, PanelLeft, Users, TrendingUp, Package, BarChart3 } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, TrendingUp, Package, BarChart3, Lock } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const getMenuItems = (t: (key: string) => string) => [
-  { icon: LayoutDashboard, label: t("portal.dashboard"), path: "/portal/dashboard", key: "dashboard" },
-  { icon: TrendingUp, label: t("portal.roi"), path: "/portal/investor", key: "roi" },
-  { icon: Package, label: t("portal.produk"), path: "/portal/referral", key: "produk" },
-  { icon: BarChart3, label: t("portal.transactions"), path: "/portal/transactions", key: "transactions" },
-  { icon: Users, label: t("portal.agents"), path: "/portal/agents", key: "agents" },
-  { icon: Users, label: t("portal.admin"), path: "/portal/admin", key: "admin" },
+  { icon: LayoutDashboard, label: t("portal.dashboard"), path: "/portal/dashboard", key: "dashboard", requiresPassword: false },
+  { icon: TrendingUp, label: t("portal.roi"), path: "/portal/investor", key: "roi", requiresPassword: false },
+  { icon: Package, label: t("portal.produk"), path: "/portal/referral", key: "produk", requiresPassword: false },
+  { icon: BarChart3, label: t("portal.transactions"), path: "/portal/transactions", key: "transactions", requiresPassword: false },
+  { icon: Users, label: t("portal.agents"), path: "/portal/agents", key: "agents", requiresPassword: false },
+  { icon: Lock, label: t("portal.admin"), path: "/portal/admin", key: "admin", requiresPassword: true },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
+const ADMIN_PASSWORD = "winbju 8282";
 
 // EMERGENCY: Mock user for client review when auth server is down
 const MOCK_USER = {
@@ -143,6 +152,12 @@ function DashboardLayoutContent({
   const menuItems = getMenuItems(t);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  
+  // Admin password protection state
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [adminAccessGranted, setAdminAccessGranted] = useState(false);
+  const [pendingAdminPath, setPendingAdminPath] = useState("");
 
   useEffect(() => {
     if (isCollapsed) {
@@ -180,8 +195,70 @@ function DashboardLayoutContent({
     };
   }, [isResizing, setSidebarWidth]);
 
+  const handleMenuClick = (item: typeof menuItems[0]) => {
+    if (item.requiresPassword && !adminAccessGranted) {
+      setPendingAdminPath(item.path);
+      setShowPasswordDialog(true);
+      setPasswordInput("");
+    } else {
+      setLocation(item.path);
+    }
+  };
+
+  const handlePasswordSubmit = () => {
+    if (passwordInput === ADMIN_PASSWORD) {
+      setAdminAccessGranted(true);
+      setShowPasswordDialog(false);
+      if (pendingAdminPath) {
+        setLocation(pendingAdminPath);
+      }
+    } else {
+      setPasswordInput("");
+      alert("Incorrect password. Please try again.");
+    }
+  };
+
   return (
     <>
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Admin Access Required</DialogTitle>
+            <DialogDescription>
+              Enter the password to access the Admin panel.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  handlePasswordSubmit();
+                }
+              }}
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowPasswordDialog(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handlePasswordSubmit}
+                className="flex-1 bg-cyan-600 hover:bg-cyan-700"
+              >
+                Unlock
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
@@ -215,7 +292,7 @@ function DashboardLayoutContent({
                   <SidebarMenuItem key={item.key}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.path)}
+                      onClick={() => handleMenuClick(item)}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal ${
                         isActive ? "bg-cyan-400/10 text-cyan-400" : "text-slate-400 hover:text-slate-300"
